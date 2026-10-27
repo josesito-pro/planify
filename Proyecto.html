@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Planify</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#4f46e5;--red:#d3122a;--bg:#fff;--surface:#fff;--ink:#14213d;--muted:#5f6b85;--line:#dcd9f5;
+--accent:var(--blue);--accent-ink:#fff;--accent-soft:#ece9ff;--accent-text:#4338ca;
+--good:#1a7a40;--good-soft:#e1f2e7;--warn:#8a5200;--warn-soft:#fbeccc;
+--grad:linear-gradient(120deg,#4338ca 0%,#7c3aed 55%,#0ea5e9 100%);
+--page:linear-gradient(165deg,#e6e9ff 0%,#fff 42%,#efe6ff 100%);
+--display:'Bricolage Grotesque','Trebuchet MS',system-ui,sans-serif;--body:'IBM Plex Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1424;--surface:#18203a;--ink:#eef2ff;--muted:#a3aed0;--line:#2b3658;--accent:#a5a0ff;--accent-ink:#0e1424;--accent-soft:#2a2766;--accent-text:#c4c0ff;--good:#6cc98a;--good-soft:#173324;--warn:#e0a23c;--warn-soft:#3a2d12;--page:linear-gradient(165deg,#1b1650 0%,#0e1424 45%,#14304a 100%);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1424;--surface:#18203a;--ink:#eef2ff;--muted:#a3aed0;--line:#2b3658;--accent:#a5a0ff;--accent-ink:#0e1424;--accent-soft:#2a2766;--accent-text:#c4c0ff;--good:#6cc98a;--good-soft:#173324;--warn:#e0a23c;--warn-soft:#3a2d12;--page:linear-gradient(165deg,#1b1650 0%,#0e1424 45%,#14304a 100%);color-scheme:dark}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg) var(--page) fixed;color:var(--ink);font:15px/1.45 var(--body);padding:0 max(16px,env(safe-area-inset-right,0px)) 96px max(16px,env(safe-area-inset-left,0px))}
+.wrap{max-width:720px;margin:0 auto;display:grid;gap:16px;padding-top:calc(14px + env(safe-area-inset-top,0px))}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.15}h2{font-size:1.25rem}h3{font-size:1.02rem}p{margin:0}
+small,.muted{color:var(--muted)}.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px}.brand img{height:44px;width:auto;max-width:90px;object-fit:contain}
+.brand b{font:700 1.6rem var(--display);background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand span{color:var(--muted);font-size:.85rem}
+.clock{background:var(--grad);color:#fff;border-radius:14px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:0 6px 20px rgba(27,79,163,.25)}
+.clock-main{display:flex;align-items:center;gap:10px}.clock-now{display:grid;line-height:1.15;min-width:120px;text-align:center}.clock-now .mono{font-size:1.15rem}.clock-now small{color:inherit;opacity:.85}
+.clock .ic,.clock .tg,.sim select{background:rgba(255,255,255,.2);color:#fff;border:0;border-radius:10px;cursor:pointer}
+.clock .ic{width:40px;height:40px;font-size:1.4rem}.clock .tg{padding:8px 10px;font-weight:600}.sim{display:flex;align-items:center;gap:8px;font-size:.85rem}.sim select{padding:8px}.sim option{color:#000}
+:disabled{opacity:.5;cursor:default}.clock .off{flex-basis:100%;font-size:.8rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:10px;min-width:0;box-shadow:0 2px 10px rgba(20,33,61,.05)}
+.card.hero{border:2px solid transparent;background:linear-gradient(var(--surface),var(--surface)) padding-box,var(--grad) border-box}
+.card.alert{border:2px solid var(--red);background:var(--warn-soft);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(211,18,42,.18)}}
+@media (prefers-reduced-motion:reduce){.card.alert{animation:none}}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;min-width:0}
+.chip{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.78rem;font-weight:600;white-space:nowrap}
+.chip.ok{background:var(--good-soft);color:var(--good)}.chip.warn{background:var(--warn-soft);color:var(--warn)}.chip.bad{background:var(--ink);color:var(--surface)}.chip.info{background:var(--accent-soft);color:var(--accent-text)}
+.seg{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.btn{border:1.5px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;cursor:pointer;font-weight:500;min-height:44px}
+.btn.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}.btn.on.warn{background:var(--warn);border-color:var(--warn);color:#fff}.btn.on.bad{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.btn.primary{background:var(--grad);color:#fff;border:0;font-weight:600}.btn.small{min-height:36px;padding:6px 10px;font-size:.85rem}.btn.ghost{background:transparent}.btn.confirm{border-color:var(--red);color:var(--red);font-weight:600}
+.big{font:700 1.5rem var(--display)}.field{display:grid;gap:4px}.field label{font-size:.82rem;color:var(--muted)}
+input[type=text],input[type=password],input[type=number],select.f{background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px;width:100%}input[type=number]{width:72px;text-align:center}
+.list>.li{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line);min-width:0}.list>.li:first-child{border-top:0}.li>div{min-width:0}
+.day-row .t{width:50px;flex:none;color:var(--muted)}.day-row.now{background:var(--accent-soft);margin-inline:-14px;padding-inline:14px}.day-row.rec{background:var(--warn-soft)}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:4px}.bar i{display:block;height:100%;background:var(--grad)}
+.scroll{overflow-x:auto}table{border-collapse:collapse;min-width:560px;width:100%;font-size:.8rem}th,td{border:1px solid var(--line);padding:6px;text-align:center;vertical-align:top}th{background:var(--accent-soft)}td.now{background:var(--accent-soft)}td.ed{cursor:pointer}td.ed:hover{outline:2px solid var(--accent)}td b{display:block}td span{color:var(--muted)}
+.subs{display:flex;flex-wrap:wrap;gap:8px}.subs label{display:flex;gap:6px;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:99px;padding:5px 10px;font-size:.82rem}
+.msg{padding:10px 12px;border-radius:10px;background:var(--accent-soft);color:var(--accent-text);font-size:.88rem}.msg.bad{background:var(--warn-soft);color:var(--warn)}
+.login{margin-top:6vh}.login .logo{display:grid;justify-items:center;gap:6px;text-align:center}.login .logo img{height:84px;max-width:200px;object-fit:contain}.login .logo b{font:700 2.4rem var(--display);background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:3px solid transparent;border-image:var(--grad) 1;display:grid;padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));z-index:5}
+nav button{background:none;border:0;padding:8px 4px;border-radius:10px;cursor:pointer;display:grid;gap:2px;justify-items:center;font-size:.78rem;color:var(--muted);position:relative;font-weight:500}
+nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}nav button.on{color:var(--accent-text);background:var(--accent-soft)}
+.badge{position:absolute;top:2px;right:calc(50% - 22px);background:var(--red);color:#fff;border-radius:99px;min-width:18px;height:18px;font-size:.7rem;display:grid;place-items:center;padding:0 4px;font-style:normal}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:12px;max-width:min(92vw,420px);z-index:9;font-size:.9rem;box-shadow:0 6px 24px rgba(0,0,0,.25)}.toast[hidden]{display:none}
+body{font-size:16px}.card{border-radius:18px}.btn{border-radius:12px;transition:transform .12s,box-shadow .12s}.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(79,70,229,.18)}.btn:active{transform:none}.clock{border-radius:18px}.hello h1{font-size:1.6rem;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}.hello small{font-size:.95rem}@media (prefers-reduced-motion:reduce){.btn{transition:none}.btn:hover{transform:none}}</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script></head>
+<body>
+<div class="wrap"><div class="top" id="top"></div><div id="clock"></div><div id="alert"></div><main id="main"></main></div>
+<nav id="nav" aria-label="Secciones"></nav>
+<div class="toast" id="toast" hidden role="status"></div>
+<script>
+const DAYS=['Lun','Mar','Mié','Jue','Vie'],DAYS_FULL=['Lunes','Martes','Miércoles','Jueves','Viernes'];
+const PER=10,TIMES=new Array(20).fill(''),ENDS=new Array(20).fill(''),REC={M:'',V:''},P=20,KEY='relevo.v2';
+let CFG={M:{ini:'07:00',dur:50,n:8,rec:3,recDur:30},V:{ini:'14:10',dur:50,n:0,rec:3,recDur:30},periodo:''};
+const hm=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'),mmn=t=>{const [h,m]=t.split(':').map(Number);return h*60+m};
+function buildTimes(){for(const sh of ['M','V']){const c=CFG[sh];let t=mmn(c.ini);REC[sh]='';
+  for(let k=0;k<PER;k++){const p=(sh==='V'?PER:0)+k;if(k>=c.n){TIMES[p]='';ENDS[p]='';continue}
+    if(c.rec>0&&c.recDur>0&&k===c.rec){REC[sh]=hm(t)+'–'+hm(t+c.recDur);t+=c.recDur}
+    TIMES[p]=hm(t);t+=c.dur;ENDS[p]=hm(t)}}}
+const shiftOf=p=>p<PER?'M':'V',valid=p=>p%PER<CFG[shiftOf(p)].n;buildTimes();
+const RC=p=>REC[shiftOf(p)],isRecAfter=p=>{const c=CFG[shiftOf(p)];return c.rec>0&&c.recDur>0&&c.rec<c.n&&p%PER===c.rec-1},turnoP=p=>p<PER?'Matutino':'Vespertino',covers=(t,p)=>!t.turno||t.turno==='Ambos'||t.turno===turnoP(p);
+function seeded(s){return()=>(s=(s*1664525+1013904223)%4294967296)/4294967296}
+function generate(st){for(let s=1;s<500;s++){const r=gen1(st,s);if(r)return r}return null}
+const baseFor=(st,g)=>{const cat=(st.catalog||[]).filter(x=>x.sem===(st.gsem||{})[g]);return [...(cat.length?cat.map(x=>({n:x.n,h:x.h})):st.subjects),...(st.sm||[]).filter(x=>x.spec&&x.spec===(st.gspec||{})[g]&&x.sem===(st.gsem||{})[g]).map(x=>({n:x.n,h:x.h}))]};
+const subsFor=(st,g)=>{const own=(st.gsub||{})[g],L=own&&own.length?own.map(x=>({n:x.n,h:x.h})):baseFor(st,g);if((st.gtutor||{})[g]&&!L.some(x=>x.n==='Tutoría'))L.push({n:'Tutoría',h:1});return L};function gen1(st,seed){const GT=st.gt||{};
+  const rnd=seeded(seed*7919),load={};st.teachers.forEach(t=>load[t.id]=0);const jobs=[];
+  for(const g of st.groups)for(const s of subsFor(st,g)){
+    if(!(s.h>0))continue;if(s.n==='Tutoría'){const tt=(st.gtutor||{})[g];if(!tt||!(tt in load))continue;load[tt]+=s.h;jobs.push({g,s:s.n,t:tt,h:s.h});continue}
+    const el=st.teachers.filter(t=>t.subjects.includes(s.n)&&(!GT[g]||!t.turno||t.turno==='Ambos'||t.turno===GT[g]));if(!el.length)return null;
+    el.sort((a,b)=>load[a.id]-load[b.id]||rnd()-.5);const mn=load[el[0].id],pf=el.find(t=>(t.prefs||[]).includes(g)&&load[t.id]<=mn+4),ch=pf||el[0];load[ch.id]+=s.h;jobs.push({g,s:s.n,t:ch.id,h:s.h});
+  }
+  jobs.sort((a,b)=>load[b.t]-load[a.t]||rnd()-.5);
+  const gb=new Set,tb=new Set,sd={},td={},out=[];
+  for(const j of jobs)for(let k=0;k<j.h;k++){
+    let best=null,bs=1e9;
+    for(let d=0;d<5;d++)for(let p=(GT[j.g]==='Vespertino'?PER:0);p<(GT[j.g]==='Vespertino'?2*PER:PER);p++){if(!valid(p))continue;
+      if(gb.has(j.g+'|'+d+'|'+p)||tb.has(j.t+'|'+d+'|'+p))continue;
+      const sc=(sd[j.g+'|'+j.s+'|'+d]||0)*100+(td[j.t+'|'+d]||0)*3+rnd()*8+p*.6;if(sc<bs){bs=sc;best=[d,p]}
+    }
+    if(!best)return null;
+    const [d,p]=best;gb.add(j.g+'|'+d+'|'+p);tb.add(j.t+'|'+d+'|'+p);
+    sd[j.g+'|'+j.s+'|'+d]=(sd[j.g+'|'+j.s+'|'+d]||0)+1;td[j.t+'|'+d]=(td[j.t+'|'+d]||0)+1;
+    out.push({g:j.g,s:j.s,t:j.t,d,p});
+  }
+  return out;
+}
+function seedState(logo){
+  const wd=new Date().getDay();
+  const st={school:'',logo:logo||'',real:false,
+    subjects:[{n:'Matemáticas',h:5},{n:'Español',h:5},{n:'Inglés',h:3},{n:'Ciencias',h:4},{n:'Historia',h:3},{n:'Geografía',h:2},{n:'Educación Física',h:2},{n:'Artes',h:2},{n:'Informática',h:2},{n:'Formación Cívica',h:2}],
+    teachers:[['Ana Ramírez','Matemáticas'],['Luis Torres','Matemáticas'],['Marta López','Español'],['Hugo Mendoza','Español'],['Sofía Hernández','Inglés'],['Diego Cruz','Inglés'],['Laura García','Ciencias'],['Raúl Ortiz','Ciencias'],['Paola Salinas','Historia,Geografía'],['Iván Vega','Geografía,Formación Cívica'],['Rosa Soto','Formación Cívica,Historia'],['Carlos Ríos','Educación Física'],['Elena Luna','Artes'],['Jorge Peña','Informática']].map((x,i)=>({id:'t'+(i+1),name:x[0],subjects:x[1].split(',')})),
+    groups:['1A','1B','2A','2B','3A','3B'],schedule:[],status:{},declined:{},makeup:[],
+    users:[{id:'u0',name:'Dirección',user:'admin',pass:'admin',role:'admin'},{id:'u1',name:'Ana Ramírez',user:'ana',pass:'1234',role:'teacher',tid:'t1'}],
+    sess:null,clock:{d:Math.min(Math.max(wd-1,0),4),p:2},me:'t1'};
+  st.schedule=generate(st)||[];return st;
+}
+function loadState(){try{const r=localStorage.getItem(KEY);if(r)return JSON.parse(r)}catch(e){}return null}
+function save(){try{localStorage.setItem('planify.v1',JSON.stringify({school:S.school,logo:S.logo,subjects:S.subjects}))}catch(e){}}
+let S=(function(){let l={};try{l=JSON.parse(localStorage.getItem('planify.v1'))||{}}catch(e){}const b=seedState();return{school:l.school||'',logo:l.logo||'',real:false,subjects:[],teachers:[],groups:[],schedule:[],status:{},declined:{},makeup:[],users:[],sess:null,prof:null,clock:b.clock,me:''}})();
+let ui={tab:'me',kind:'g',sel:'',msg:null,confirm:null,off:false,reg:false};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const tname=id=>(S.teachers.find(t=>t.id===id)||{name:'?'}).name;
+const at=(g,d,p)=>S.schedule.find(e=>e.g===g&&e.d===d&&e.p===p);
+const tat=(t,d,p)=>S.schedule.find(e=>e.t===t&&e.d===d&&e.p===p);
+const stat=t=>S.status[S.clock.d+'|'+S.clock.p+'|'+t]||'ok';
+const hoursOf=t=>S.schedule.filter(e=>e.t===t).length;
+const U=()=>S.sess&&S.prof?{name:S.prof.name,role:S.prof.rol,tid:S.prof.rol==='admin'?null:S.prof.id}:null;
+const isAdmin=()=>{const u=U();return !!u&&u.role==='admin'};
+const meId=()=>{const u=U();return u&&u.tid?u.tid:(u&&u.role==='admin'?'':S.me)};
+function groupState(g){const {d,p}=S.clock,e=at(g,d,p);if(S.gt[g]&&S.gt[g]!==turnoP(p))return{k:'off'};if(!e)return{k:'free'};const s=stat(e.t);return{k:s==='ok'?'ok':s,e}}
+function offers(){
+  const {d,p}=S.clock,out=[];
+  for(const g of S.groups){
+    if(['ok','off'].includes(groupState(g).k))continue;
+    for(const t of S.teachers){
+      if(tat(t.id,d,p)||stat(t.id)!=='ok'||!covers(t,p))continue;
+      const fut=S.schedule.filter(e=>e.t===t.id&&e.g===g&&(e.d>d||(e.d===d&&e.p>p))).sort((a,b)=>a.d-b.d||a.p-b.p)[0];
+      const key=d+'|'+p+'|'+g+'|'+t.id;
+      if(fut&&!S.declined[key])out.push({g,t:t.id,e:fut,key});
+    }
+  }
+  return out;
+}
+function acceptOffer(key){
+  const o=offers().find(x=>x.key===key);if(!o)return;
+  const {d,p}=S.clock,m=at(o.g,d,p),e=o.e,od=e.d,op=e.p;
+  if(m){if(!tat(m.t,od,op)){m.d=od;m.p=op}else{S.schedule=S.schedule.filter(x=>x!==m);S.makeup.push({g:m.g,s:m.s,t:m.t})}}
+  e.d=d;e.p=p;save();toast('Listo: adelantaste '+e.s+' con '+e.g+'. Esa hora queda libre en tu horario.');
+}
+function regen(){
+  const r=generate(S);
+  if(r){S.schedule=r;S.makeup=[];S.status={};S.declined={};const h=S.teachers.map(t=>hoursOf(t.id));
+    ui.msg={ok:1,t:'Horario generado sin choques. Carga por maestro: de '+Math.min(...h)+' a '+Math.max(...h)+' horas a la semana.'}}
+  else ui.msg={ok:0,t:'No se pudo repartir sin choques. Revisa que cada materia tenga al menos un maestro y que las horas no pasen de '+(DAYS.length*CFG.M.n)+' por grupo, y que el turno de cada grupo tenga horas en Jornada y receso.'};
+  save();
+}
+const chip=(k,t)=>`<span class="chip ${k}">${esc(t)}</span>`;
+const hourLabel=p=>`${p%PER+1}ª hora · ${TIMES[p]}`;
+const logoImg=()=>S.logo?`<img src="${S.logo}" alt="Logo de ${esc(S.school)}">`:'';
+
+function vTop(){
+  const u=U();
+  return `<div class="brand">${logoImg()}<div><b>Planify</b><br><span>${esc(S.school||'')}</span></div></div>
+  <div class="row">${u?`<small>${esc(u.name)}</small><button class="btn small ghost" data-act="logout">Salir</button>`:''}</div>`;
+}
+function vLogin(){
+  const m=ui.msg?`<div class="msg${ui.msg.ok?'':' bad'}">${esc(ui.msg.t)}</div>`:'';
+  if(ui.reg)return `<div class="card hero login"><div class="logo">${logoImg()}<b>Crear cuenta</b><small>Para maestros del ${esc(S.school)}</small></div>${m}
+    <div class="field"><label for="rc">Clave del plantel (CCT)</label><input type="text" id="rc" autocapitalize="characters"></div><div class="field"><label for="rn">Nombre y apellido</label><input type="text" id="rn"></div><div class="field"><label for="rt">Turno</label><select id="rt" class="f"><option>Matutino</option><option>Vespertino</option><option>Ambos</option></select></div>
+    <div class="field"><label for="ru">Correo institucional</label><input type="text" id="ru" autocapitalize="none"></div>
+    <div class="field"><label for="rp">Contraseña</label><input type="password" id="rp"></div>
+    <small>Tus materias las eliges al entrar, en <b>Mi día → Mis materias</b>.</small>
+    <button class="btn primary" data-act="reg">Crear cuenta y entrar</button><button class="btn ghost" data-act="toreg">Ya tengo cuenta</button></div>`;
+  return `<div class="card hero login"><div class="logo">${logoImg()}<b>Planify</b><small>👋 ¡Bienvenido! Inicia sesión para ver tus horarios</small></div>${m}
+    <div class="field"><label for="lc">Clave del plantel (CCT)</label><input type="text" id="lc" autocapitalize="characters"></div><div class="field"><label for="lu">Correo</label><input type="text" id="lu" autocapitalize="none"></div>
+    <div class="field"><label for="lp">Contraseña</label><input type="password" id="lp"></div>
+    <button class="btn primary" data-act="login">Entrar</button><button class="btn" data-act="toreg">Crear cuenta</button><button class="btn ghost" data-act="forgot">Olvidé mi contraseña</button>
+    </div>`;
+}
+function vClock(){
+  const {d,p}=S.clock,r=!!S.real;
+  return `<div class="clock"><div class="clock-main"><button class="ic" data-act="prev" aria-label="Hora anterior"${r?' disabled':''}>‹</button>
+    <div class="clock-now"><span class="mono">${DAYS[d]} ${TIMES[p]}</span><small>${p%PER+1}ª hora · ${turnoP(p)} · ${r?'hora real':'hora simulada'}</small></div>
+    <button class="ic" data-act="next" aria-label="Hora siguiente"${r?' disabled':''}>›</button></div>
+    <div class="sim"><label>Día <select id="day"${r?' disabled':''}>${DAYS_FULL.map((x,i)=>`<option value="${i}"${i===d?' selected':''}>${x}</option>`).join('')}</select></label>
+    <button class="tg" data-act="real">${r?'Usar simulación':'Usar hora real'}</button></div>
+    ${r&&ui.off?'<div class="off">Fuera de horario de clases. Se muestra la última hora.</div>':''}</div>`;
+}
+function vAlert(){
+  const t=meId(),mine=offers().filter(o=>o.t===t);if(!mine.length)return '';
+  const o=mine[0];
+  return `<div class="card alert" role="alert"><div class="row"><h3>🔔 Alerta de cobertura${mine.length>1?' ('+mine.length+')':''}</h3>${chip('bad','Urgente')}</div>
+    <div><b>${esc(o.g)} se quedó sin maestro ahora</b><br><small>¿Adelantar tu clase de ${esc(o.e.s)} (${DAYS[o.e.d]} ${TIMES[o.e.p]}) a esta hora? Tu hora original quedará libre.</small></div>
+    <div class="row"><button class="btn primary" data-act="acc" data-key="${esc(o.key)}">Adelantar clase</button><button class="btn" data-act="dec" data-key="${esc(o.key)}">No puedo</button></div></div>`;
+}
+function vMe(){
+  const {d,p}=S.clock,id=meId(),t=S.teachers.find(x=>x.id===id)||S.teachers[0]||{id:'',name:'—',subjects:[]};
+  const e=tat(t.id,d,p),s=stat(t.id);
+  const seg=items=>`<div class="seg">${items.map(([v,l,c])=>`<button class="btn${s===v?' on '+c:''}" data-act="set" data-v="${v}" data-t="${t.id}">${l}</button>`).join('')}</div>`;
+  let now;
+  if(e){
+    const note=s==='ok'?'Confirmado. Se avisa a dirección que entras.':s==='meeting'?'Marcaste junta. Tu grupo queda sin maestro.':'Marcaste que no asistirás. Tu grupo queda sin maestro.';
+    const near=offers().filter(o=>o.g===e.g).length;
+    now=`<div class="card hero"><div class="row"><small class="mono">${hourLabel(p)}</small>${chip(s==='ok'?'ok':s==='meeting'?'warn':'bad',s==='ok'?'Entras':s==='meeting'?'En junta':'Ausente')}</div>
+      <div><div class="big">${esc(e.g)} · ${esc(e.s)}</div><small>${note}${s!=='ok'?` Se avisó a ${near} maestro(s) en sala de maestros.`:''}</small></div>
+      ${seg([['ok','Voy a entrar',''],['meeting','Tengo junta','warn'],['absent','No asistiré','bad']])}</div>`;
+  }else{
+    now=`<div class="card hero"><div class="row"><small class="mono">${hourLabel(p)}</small>${chip(s==='ok'?'info':'warn',s==='ok'?'Descanso':'No disponible')}</div>
+      <div><div class="big">Hora libre · descanso</div><small>${s==='ok'?'Si algún grupo se queda sin maestro, te llegará una alerta para adelantar tu clase.':'No recibirás alertas de cobertura esta hora.'}</small></div>
+      ${seg([['ok','Estoy disponible',''],['meeting','Tengo junta / ocupado','warn']])}</div>`;
+  }
+  let nx;
+  if(!valid(p+1)||p+1>=P)nx='Fin de la jornada de hoy.';
+  else{const x=tat(t.id,d,p+1);nx=`<b>${hourLabel(p+1)}</b> → ${x?`<b>${esc(x.g)}</b> · ${esc(x.s)}`:'<b>Hora libre</b> (descanso en sala de maestros)'}`;}
+  const next=`<div class="card"><div class="row"><h3>Sigue</h3>${isRecAfter(p)?chip('warn','Receso '+RC(p)):''}</div><p>${nx}</p></div>`;
+  const agenda=`<div class="card"><h3>Mi día · ${DAYS_FULL[d]}</h3><div class="list">${visFor(t).map(i=>[TIMES[i],i]).map(([tm,i])=>{
+    const x=tat(t.id,d,i);
+    return `<div class="li day-row${i===p?' now':''}"><span class="t mono">${tm}</span><div style="flex:1">${x?`<b>${esc(x.g)}</b> · ${esc(x.s)}`:'<span class="muted">Libre · descanso</span>'}</div>${i===p?chip('info','Ahora'):''}</div>`
+      +(isRecAfter(i)?`<div class="li day-row rec"><span class="t mono">${RC(i).slice(0,5)}</span><div style="flex:1"><b>Receso</b> · ${RC(i)}</div>${chip('warn','Descanso')}</div>`:'');}).join('')}</div>
+    <small>${hoursOf(t.id)} horas a la semana asignadas.</small></div>`;
+  const pick=isAdmin()?`<div class="card"><div class="field"><label for="me">Ver como maestro / maestra</label><select id="me" class="f">${S.teachers.map(x=>`<option value="${x.id}"${x.id===t.id?' selected':''}>${esc(x.name)} · ${esc(x.subjects.join(', '))}</option>`).join('')}</select></div></div>`:'';
+  return `<div class="hello"><h1>¡Hola, ${esc(((U()||{}).name||'').split(' ')[0])}! 👋</h1><small>Esto es lo que te toca hoy, ${DAYS_FULL[d]}.</small></div>`+pick+now+next+agenda+misMat()+misPref();
+}
+function vSchool(){
+  const {d,p}=S.clock,rows=S.groups.map(g=>({g,st:groupState(g)})).filter(r=>r.st.k!=='off'),bad=rows.filter(r=>r.st.k!=='ok').length,free=S.teachers.filter(t=>!tat(t.id,d,p)&&covers(t,p));
+  const line=r=>{const st=r.st,n=offers().filter(o=>o.g===r.g).length;
+    if(st.k==='ok')return `<div class="li"><div><b>${esc(r.g)}</b> · ${esc(st.e.s)}<br><small>${esc(tname(st.e.t))}</small></div>${chip('ok','En clase')}</div>`;
+    if(st.k==='free')return `<div class="li"><div><b>${esc(r.g)}</b> · sin clase asignada<br><small>${n} maestro(s) con aviso de cobertura</small></div>${chip('bad','Sin maestro')}</div>`;
+    return `<div class="li"><div><b>${esc(r.g)}</b> · ${esc(st.e.s)}<br><small>${esc(tname(st.e.t))} ${st.k==='meeting'?'está en junta':'no asistirá'} · ${n} maestro(s) avisados</small></div>${chip('bad','Sin maestro')}</div>`};
+  return `${pasos()}<div class="card"><div class="row"><div><h2>En vivo</h2><small>Grupos con o sin maestro en este momento.</small></div><small class="mono">${DAYS[d]} ${TIMES[p]}</small></div>
+    <div class="row"><div><div class="big">${rows.length-bad} de ${rows.length}</div><small>grupos con maestro</small></div>${bad?chip('bad',bad+' sin cubrir'):chip('ok','Todo cubierto')}</div></div>
+    <div class="card"><div class="list">${rows.map(line).join('')}</div></div>
+    <div class="card"><h3>Sala de maestros (${free.length})</h3><div class="subs">${free.length?free.map(t=>`<span class="chip ${stat(t.id)==='ok'?'info':'warn'}">${esc(t.name)}${stat(t.id)==='ok'?'':' · junta'}</span>`).join(''):'<small>Nadie libre esta hora.</small>'}</div></div>
+    ${S.makeup.length?`<div class="card"><h3>Clases por reponer</h3><div class="list">${S.makeup.map(m=>`<div class="li"><div><b>${esc(m.g)}</b> · ${esc(m.s)}<br><small>${esc(tname(m.t))}</small></div>${chip('warn','Pendiente')}</div>`).join('')}</div></div>`:''}`;
+}
+function vTable(){
+  const kind=ui.kind,opts=kind==='g'?S.groups.map(g=>[g,'Grupo '+g]):S.teachers.map(t=>[t.id,t.name]);
+  if(!opts.find(o=>o[0]===ui.sel))ui.sel=opts[0]?opts[0][0]:'';
+  const cell=(d,p)=>{const e=kind==='g'?at(ui.sel,d,p):tat(ui.sel,d,p),now=S.clock.d===d&&S.clock.p===p;
+    return `<td class="${now?'now':''}${isAdmin()&&kind==='g'?' ed':''}"${isAdmin()&&kind==='g'?` data-act="cell" data-d="${d}" data-p="${p}"`:''}>${e?`<b>${esc(e.s)}</b><span>${esc(kind==='g'?tname(e.t).split(' ').slice(-1)[0]:e.g)}</span>`:'<span>·</span>'}</td>`};
+  return `<div class="card"><div><h2>Horarios</h2><small>${isAdmin()&&ui.kind==='g'?'Toca una celda para cambiarla o dejarla libre.':'Consulta el horario de un grupo o de un maestro.'}</small></div><div class="row">
+    <div class="field" style="flex:1;min-width:130px"><label for="kind">Ver por</label><select id="kind" class="f"><option value="g"${kind==='g'?' selected':''}>Grupo</option><option value="t"${kind==='t'?' selected':''}>Maestro</option></select></div>
+    <div class="field" style="flex:2;min-width:160px"><label for="sel">Elegir</label><select id="sel" class="f">${opts.map(o=>`<option value="${esc(o[0])}"${o[0]===ui.sel?' selected':''}>${esc(o[1])}</option>`).join('')}</select></div></div>
+    <div class="scroll"><table><thead><tr><th>Hora</th>${DAYS.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>
+    ${visTable().map(p=>[TIMES[p],p]).map(([tm,p])=>`<tr><th class="mono">${tm}</th>${DAYS.map((_,d)=>cell(d,p)).join('')}</tr>`+(isRecAfter(p)?`<tr><th class="mono">Receso</th><td colspan="5"><span>${RC(p)}</span></td></tr>`:'')).join('')}</tbody></table></div>
+    <small>La celda resaltada es la hora actual. Un punto significa hora libre.</small>${ui.kind==='g'&&S.groups.length?`<div class="row"><button class="btn small" data-act="pdf1">PDF para pegar en el salón</button>${isAdmin()?`<button class="btn small" data-act="gedit" data-g="${esc(ui.sel)}">✏️ Materias y tutor del grupo</button><button class="btn small" data-act="pdfall">PDF de todos los grupos</button>`:''}</div>`:''}</div>${cellEditor()}`;
+}
+function vSetup(){
+  const hs=S.teachers.map(t=>hoursOf(t.id)),mx=Math.max(1,...hs);
+  return `<div class="card"><h2>Generar horario</h2>
+    ${ui.msg?`<div class="msg${ui.msg.ok?'':' bad'}">${esc(ui.msg.t)}</div>`:''}
+    <button class="btn primary" data-act="gen">Generar horario equitativo</button>
+    <small>Reparte las horas de cada materia entre los maestros que la imparten, al de menor carga, sin que nadie esté en dos salones a la vez.</small></div>
+  <!--@e--><div class="card"><h3>Escuela y logo</h3><div class="field"><label for="sn">Nombre que aparece arriba</label><input type="text" id="sn" value="${esc(S.school||'')}"></div>
+    <div class="row">${logoImg()}<div class="field"><label for="logo">Insertar logo (imagen)</label><input type="file" id="logo" accept="image/*"></div>${S.logo?'<button class="btn small ghost" data-act="rmlogo">Quitar logo</button>':''}</div></div>
+  <!--@e--><div class="card"><h3>Jornada y receso</h3><small>Cada escuela define sus horas. Ejemplo: entrada 07:00, 50 min por hora, 8 horas y receso de 30 min después de la 3ª hora. Pon 0 horas para apagar un turno.</small>
+  ${['M','V'].map(sh=>{const c=CFG[sh],a=sh==='M'?0:PER;return `<div class="stack"><b>${sh==='M'?'Matutino':'Vespertino'}${c.n?` · ${TIMES[a]}–${ENDS[a+c.n-1]}${REC[sh]?' · receso '+REC[sh]:''}`:' · apagado'}</b>
+  <div class="row"><label>Entrada <input type="text" id="hi-${sh}" value="${c.ini}" style="width:80px"></label><label>Min por hora <input type="number" id="hd-${sh}" value="${c.dur}" min="30" max="90"></label><label>Horas <input type="number" id="hn-${sh}" value="${c.n}" min="0" max="10"></label></div>
+  <div class="row"><label>Receso después de la hora n.º <input type="number" id="hr-${sh}" value="${c.rec}" min="0" max="9"></label><label>Duración (min) <input type="number" id="hc-${sh}" value="${c.recDur}" min="0" max="60"></label></div></div>`}).join('')}
+  <div class="field"><label for="hp">Periodo en el encabezado del PDF (opcional)</label><input type="text" id="hp" value="${esc(CFG.periodo||'')}" placeholder="Septiembre 2026 - Enero 2027"></div>
+  <button class="btn primary" data-act="saveH">Guardar jornada</button><small>Después de guardar, toca "Generar horario equitativo".</small></div>
+  <!--@p--><div class="card"><h3>Maestros (${S.teachers.length}) · cuentas: ${S.users.length}</h3><div class="list">${S.teachers.map(t=>`
+    <div class="li"><div style="flex:1"><b>${esc(t.name)}</b> <small>${esc(t.subjects.join(', '))}</small><div class="bar"><i style="width:${hoursOf(t.id)/mx*100}%"></i></div></div>
+    <span class="mono">${hoursOf(t.id)} h</span><button class="btn small ghost${ui.confirm===t.id?' confirm':''}" data-act="delT" data-t="${t.id}" aria-label="Quitar a ${esc(t.name)}">${ui.confirm===t.id?'¿Seguro?':'Quitar'}</button></div>`).join('')}</div>
+    <small>Cada maestro crea su propia cuenta desde la pantalla de inicio (sin límite de usuarios).</small></div>
+  <!--@e--><div class="card"><h3>Ciclo escolar</h3><div class="seg"><button class="btn${S.ciclo==='par'?'':' on'}" data-act="ciclo" data-v="impar">Agosto: semestres 1, 3, 5</button><button class="btn${S.ciclo==='par'?' on':''}" data-act="ciclo" data-v="par">Febrero: semestres 2, 4, 6</button></div></div>
+  <!--@a--><div class="card"><h3>Asignaturas por semestre</h3><small>Escribe la asignatura y elige en qué semestre se imparte (ej. Inglés III en 3°). Los grupos de ese semestre la toman solos; después puedes quitar o agregar por grupo con ✏️.</small>
+  ${[1,2,3,4,5,6].map(n=>{const L=S.catalog.filter(x=>x.sem===n);return L.length?`<div class="stack"><b>${n}° semestre</b><div class="list">${L.map(x=>`<div class="li"><div>${esc(x.n)} <small>${x.h} h</small></div><button class="btn small ghost" data-act="cdel" data-id="${x.id}">Quitar</button></div>`).join('')}</div></div>`:''}).join('')}
+  <div class="row"><select id="cs2" class="f" style="width:90px">${[1,2,3,4,5,6].map(n=>`<option value="${n}">${n}°</option>`).join('')}</select><input type="text" id="cn" placeholder="Nombre de la asignatura" style="flex:1"><label>Horas por semana <input type="number" id="cx" value="3" min="1" max="10"></label><button class="btn" data-act="cadd">Agregar</button></div></div>
+  <!--@a--><div class="card"><h3>Especialidades y submódulos</h3><small>Solo Dirección puede agregarlos o quitarlos.</small>
+  ${S.specs.map(x=>`<div class="stack"><div class="row"><b>${esc(x.n)}</b><button class="btn small ghost" data-act="delE" data-id="${x.id}">Quitar</button></div><div class="list">${S.sm.filter(m=>m.spec===x.id).sort((a,b)=>a.sem-b.sem).map(m=>`<div class="li"><div>${m.sem}° · ${esc(m.n)} <small>${m.h} h</small></div><button class="btn small ghost" data-act="delM" data-id="${m.id}">Quitar</button></div>`).join('')}</div></div>`).join('')}
+  <div class="row"><input type="text" id="en" placeholder="Nueva especialidad (ej. Programación)" style="flex:1"><button class="btn" data-act="addE">Agregar</button></div>
+  <div class="field"><label for="mn">Agregar submódulo a una especialidad</label><div class="row"><select id="me2" class="f" style="flex:1">${S.specs.map(x=>`<option value="${x.id}">${esc(x.n)}</option>`).join('')}</select><select id="ms" class="f" style="width:90px">${semOpts()}</select><input type="number" id="mh" value="4" min="1" max="10"></div><input type="text" id="mn" placeholder="Nombre del submódulo"><button class="btn" data-act="addM">Agregar submódulo</button></div></div>
+  <!--@p--><div class="card"><h3>Administradores (${S.admins.length})</h3><small>Pueden cambiar todo en tu escuela. Para agregar otro, autoriza su correo abajo con el rol Administrador; después él crea su cuenta.</small><div class="list">${S.admins.map(a=>`<div class="li"><div><b>${esc(a.name)}</b>${a.uid===S.sess?' '+chip('info','Tú'):''}</div>${a.uid===S.sess?'':`<button class="btn small ghost${ui.confirm===a.id?' confirm':''}" data-act="delT" data-t="${a.id}">${ui.confirm===a.id?'¿Seguro?':'Quitar'}</button>`}</div>`).join('')}</div></div>
+  <!--@p--><div class="card"><h3>Correos autorizados (${S.allowed.length})</h3><small>Solo estos correos pueden crear cuenta en tu escuela. Elige el rol: Maestro, o Administrador para dar acceso total.</small><div class="list">${S.allowed.map(a=>`<div class="li"><div><b>${esc(a.email)}</b> <small>${esc(a.turno||'')}</small>${a.rol==='admin'?' '+chip('info','Administrador'):''}</div><button class="btn small ghost" data-act="delA" data-id="${a.id}">Quitar</button></div>`).join('')}</div><div class="field"><label for="ae">Correo institucional</label><input type="text" id="ae" placeholder="maestro@escuela.edu.mx" autocapitalize="none"></div><div class="row"><select id="at" class="f" style="flex:1"><option>Matutino</option><option>Vespertino</option><option>Ambos</option></select><select id="ar" class="f" style="flex:1"><option value="teacher">Maestro</option><option value="admin">Administrador</option></select><button class="btn" data-act="addA">Autorizar</button></div></div>
+  <!--@g-->${groupEditor()}<!--@g--><div class="card"><h3>Grupos (${S.groups.length})</h3><div class="subs">${S.groups.map(g=>`<span class="chip info">${esc(g)} · ${(S.gt[g]||'M')[0]} · ${S.gsem[g]||1}° ${esc(specName(S.gspec[g]))} <button class="btn small ghost" style="min-height:0;padding:0 4px;border:0" data-act="gedit" data-g="${esc(g)}" aria-label="Materias de ${esc(g)}">✏️</button><button class="btn small ghost${ui.confirm==='g:'+g?' confirm':''}" style="min-height:0;padding:0 4px;border:0" data-act="delG" data-g="${esc(g)}" aria-label="Quitar grupo ${esc(g)}">${ui.confirm==='g:'+g?'¿Seguro?':'×'}</button></span>`).join('')}</div>
+    <div class="stack"><b>Nuevo grupo</b>
+    <div class="field"><label for="ng">Nombre del grupo</label><input type="text" id="ng" placeholder="Ej. 3A"></div>
+    <div class="row"><div class="field" style="flex:1"><label for="gt">Turno</label><select id="gt" class="f"><option>Matutino</option><option>Vespertino</option></select></div><div class="field" style="flex:1"><label for="gs">Semestre</label><select id="gs" class="f">${semOpts()}</select></div></div>
+    <div class="field"><label for="gp">Especialidad</label><select id="gp" class="f"><option value="">Sin especialidad (tronco común)</option>${S.specs.map(x=>`<option value="${x.id}">${esc(x.n)}</option>`).join('')}</select></div>
+    <div class="field"><label for="gtt">Tutor (opcional)</label><select id="gtt" class="f"><option value="">Sin tutor</option>${S.teachers.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('')}</select><small>El tutor se elige una sola vez y se queda con el grupo hasta 6° semestre: su hora de Tutoría aparece en cada horario.</small></div>
+    <button class="btn primary" data-act="addG">Agregar grupo</button></div>
+    <div class="stack"><b>Cambio de ciclo escolar</b><small>Sube todos los grupos un semestre (los tutores se quedan con su grupo) y los de 6° se dan de baja. Se borran los horarios y las listas propias para volver a generarlos.</small>
+    <button class="btn${ui.confirm==='adv'?' confirm':''}" data-act="advance">${ui.confirm==='adv'?'¿Seguro? Toca otra vez para confirmar':'Avanzar al siguiente ciclo'}</button></div></div>
+  `;
+}
+const ICONS={me:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>',
+ school:'<svg viewBox="0 0 24 24"><path d="M3 10l9-6 9 6"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>',
+ table:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg>',
+ setup:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>'};
+function render(){
+  $('#top').innerHTML=vTop();
+  const u=U();
+  if(!u){$('#clock').innerHTML='';$('#alert').innerHTML='';$('#nav').innerHTML='';$('#nav').style.display='none';$('#main').innerHTML=vLogin();return}
+  $('#nav').style.display='';
+  const tabs=isAdmin()?[['school','En vivo'],['table','Horarios'],['setup','Configurar']]:[['me','Mi día'],['school','En vivo'],['table','Horarios']];
+  if(!tabs.find(x=>x[0]===ui.tab))ui.tab=tabs[0][0];
+  $('#clock').innerHTML=vClock();$('#alert').innerHTML=vAlert();
+  $('#main').innerHTML={me:vMe,school:vSchool,table:vTable,setup:vSetup}[ui.tab]();
+  const n=offers().filter(o=>o.t===meId()).length;
+  $('#nav').style.gridTemplateColumns=`repeat(${tabs.length},1fr)`;
+  $('#nav').innerHTML=tabs.map(([k,l])=>`<button class="${ui.tab===k?'on':''}" data-tab="${k}">${ICONS[k]}<span>${l}</span>${k==='me'&&n?`<i class="badge">${n}</i>`:''}</button>`).join('');
+  notifyNew();
+}
+let seen=new Set(),toastTimer;
+function notifyNew(){
+  const mine=offers().filter(o=>o.t===meId()),fresh=mine.filter(o=>!seen.has(o.key));seen=new Set(mine.map(o=>o.key));
+  if(fresh.length){toast('🔔 '+fresh[0].g+' no tiene maestro. ¿Adelantar tu clase de '+fresh[0].e.s+'?');try{navigator.vibrate&&navigator.vibrate([150,80,150])}catch(e){}}
+}
+function toast(t){const el=$('#toast');el.textContent=t;el.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.hidden=true,4500)}
+function realSlot(){
+  const n=new Date(),wd=n.getDay()-1;if(wd<0||wd>4)return null;const m=n.getHours()*60+n.getMinutes();
+  for(let p=0;p<P;p++){const [h,mi]=TIMES[p].split(':').map(Number),st=h*60+mi;if(m>=st&&m<st+(valid(p)?CFG[shiftOf(p)].dur:0))return{d:wd,p}}return null;
+}
+function tick(force){
+  if(!S.real){ui.off=false;if(force){save();render()}return}
+  const r=realSlot(),was=ui.off;ui.off=!r;const changed=r&&(r.d!==S.clock.d||r.p!==S.clock.p);if(changed)S.clock=r;
+  if(changed||was!==ui.off||force){save();render()}
+}
+function step(dir){let {d,p}=S.clock;p+=dir;if(p>=P){p=0;d=(d+1)%5}if(p<0){p=P-1;d=(d+4)%5}S.clock={d,p}}
+function boot(){
+  document.addEventListener('click',ev=>{
+    const tb=ev.target.closest('[data-tab]');if(tb){ui.tab=tb.dataset.tab;render();window.scrollTo(0,0);return}
+    const b=ev.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;
+    if(a!=='delT'&&a!=='delG')ui.confirm=null;
+    if(a==='prev'){if(!S.real)step(-1)}else if(a==='next'){if(!S.real)step(1)}
+    else if(a==='real'){S.real=!S.real;tick(true)}
+    else if(a==='set')S.status[S.clock.d+'|'+S.clock.p+'|'+b.dataset.t]=b.dataset.v;
+    else if(a==='acc')acceptOffer(b.dataset.key);
+    else if(a==='dec')S.declined[b.dataset.key]=1;
+    else if(a==='gen')regen();
+    else if(a==='reset'){S=seedState(S.logo);ui.msg=null;ui.reg=false;seen=new Set()}
+    else if(a==='logout'){S.sess=null;ui.msg=null;seen=new Set()}
+    else if(a==='toreg'){ui.reg=!ui.reg;ui.msg=null}
+    else if(a==='login'){const un=$('#lu').value.trim().toLowerCase(),pw=$('#lp').value,u=S.users.find(x=>x.user===un&&x.pass===pw);
+      if(u){S.sess=u.id;ui.msg=null;ui.tab='me';seen=new Set()}else ui.msg={ok:0,t:'Usuario o contraseña incorrectos.'}}
+    else if(a==='reg'){
+      const name=$('#rn').value.trim(),un=$('#ru').value.trim().toLowerCase(),pw=$('#rp').value;
+      const subs=[...document.querySelectorAll('.ns:checked')].map(x=>S.subjects[+x.value].n);
+      if(!name||!un||!pw||!subs.length)ui.msg={ok:0,t:'Llena nombre, usuario y contraseña, y marca al menos una materia.'};
+      else if(S.users.some(x=>x.user===un))ui.msg={ok:0,t:'Ese usuario ya existe. Elige otro.'};
+      else{const tid='t'+Date.now(),uid='u'+Date.now();S.teachers.push({id:tid,name,subjects:subs});S.users.push({id:uid,name,user:un,pass:pw,role:'teacher',tid});regen();S.sess=uid;ui.reg=false;ui.tab='me';ui.msg=null;seen=new Set()}
+    }
+    else if(a==='rmlogo')S.logo='';
+    else if(a==='delT'){if(ui.confirm!==b.dataset.t)ui.confirm=b.dataset.t;else{const id=b.dataset.t;ui.confirm=null;S.teachers=S.teachers.filter(t=>t.id!==id);S.users=S.users.filter(u=>u.tid!==id);if(S.me===id)S.me=S.teachers[0]?S.teachers[0].id:'';if(!U())S.sess=null;regen()}}
+    else if(a==='delG'){const k='g:'+b.dataset.g;if(ui.confirm!==k)ui.confirm=k;else{ui.confirm=null;S.groups=S.groups.filter(g=>g!==b.dataset.g);regen()}}
+    else if(a==='addG'){const v=$('#ng').value.trim().toUpperCase();if(v&&!S.groups.includes(v)){S.groups.push(v);regen()}}
+    save();render();
+  });
+  document.addEventListener('change',ev=>{
+    const t=ev.target;
+    if(t.id==='day')S.clock.d=+t.value;
+    else if(t.id==='me'){S.me=t.value;seen=new Set()}
+    else if(t.id==='sn'){S.school=t.value.trim();if(S.prof&&S.prof.school_id)sb.from('schools').update({nombre:S.school}).eq('id',S.prof.school_id)}
+    else if(t.id==='kind'){ui.kind=t.value;ui.sel=''}
+    else if(t.id==='sel')ui.sel=t.value;
+    else if(t.id==='logo'){const f=t.files[0];if(!f)return;const r=new FileReader();
+      r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,240/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);S.logo=c.toDataURL('image/png');save();render();if(S.prof&&S.prof.school_id)sb.from('schools').update({logo:S.logo}).eq('id',S.prof.school_id)};im.src=r.result};r.readAsDataURL(f);return}
+    else if(t.classList.contains('sh')){S.subjects[+t.dataset.i].h=Math.max(0,Math.min(10,+t.value||0));ui.msg=null}
+    else return;
+    save();render();
+  });
+  setInterval(tick,30000);tick();render();
+}
+</script>
+<script>
+const SB_URL='https://rscorenutlyzflzgsbhm.supabase.co',SB_KEY='sb_publishable_7Og4mvxWwdrNz3KujOa9cQ__Ws5gK9p';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+S.gt={};S.gsem={};S.gspec={};S.gtutor={};S.catalog=[];S.gsub={};S.admins=[];S.specs=[];S.sm=[];S.ciclo='impar';S.allowed=[];
+const LOCK={n:0,u:0};
+function pasos(){
+  if(!isAdmin())return '';
+  const st=[[S.hasHor,'Configura la jornada y el receso','Configurar → 1 · Escuela'],[S.catalog.length>0,'Agrega las asignaturas de cada semestre','Configurar → 2 · Asignaturas'],[S.groups.length>0,'Crea tus grupos','Configurar → 3 · Grupos'],[S.allowed.length>0,'Autoriza los correos de tus maestros','Configurar → 4 · Maestros'],[S.teachers.length>0,'Espera a que tus maestros creen su cuenta',''],[S.schedule.length>0,'Genera el horario equitativo','Configurar → 5 · Generar']];
+  if(st.every(x=>x[0]))return '';
+  return `<div class="card hero"><h3>🚀 Primeros pasos</h3><div class="list">${st.map(x=>`<div class="li"><div>${x[0]?'✅':'⬜'} ${x[1]}${x[2]?` <small>· ${x[2]}</small>`:''}</div></div>`).join('')}</div></div>`;
+}
+function misPref(){
+  const t=S.teachers.find(x=>x.id===(S.prof&&S.prof.id));if(isAdmin()||!t||!S.groups.length)return '';
+  const mine=S.groups.find(g=>S.gtutor[g]===t.id)||'';
+  return `<div class="card"><h3>Mis grupos <small>(opcional)</small></h3><small>Si quieres dar clase a ciertos grupos, márcalos. Se toma en cuenta al generar el horario, pero no es obligatorio.</small>
+  <div class="subs">${S.groups.map(g=>`<label><input type="checkbox" class="pg" value="${esc(g)}"${(t.prefs||[]).includes(g)?' checked':''}> ${esc(g)}</label>`).join('')}</div><button class="btn" data-act="savePg">Guardar mis grupos</button>
+  <div class="field"><label for="tu">Soy tutor del grupo <small>(opcional)</small></label><select id="tu" class="f"><option value="">Ninguno</option>${S.groups.filter(g=>!S.gtutor[g]||S.gtutor[g]===t.id).map(g=>`<option${g===mine?' selected':''}>${esc(g)}</option>`).join('')}</select></div><button class="btn" data-act="saveTu">Guardar tutoría</button><small>La Tutoría de ese grupo siempre aparece con tu nombre en su horario.</small></div>`;
+}
+function groupEditor(){
+  const g=ui.gedit;if(!g||!S.groups.includes(g))return '';
+  const own=S.gsub[g]||[],L=own.length?own:baseFor(S,g),tut=S.gtutor[g];
+  return `<div class="card hero"><div class="row"><h3>✏️ Materias y tutor de ${esc(g)}</h3><button class="btn small ghost" data-act="gclose">Cerrar</button></div>
+  <small>${own.length?'Este grupo tiene su propia lista.':'Ahora usa la lista base de su semestre. Agrega una asignatura o toca "Personalizar" para editarla.'}</small>
+  <div class="field"><label for="gtu">Tutor del grupo (opcional)</label><select id="gtu" class="f"><option value="">Sin tutor</option>${S.teachers.map(t=>`<option value="${t.id}"${tut===t.id?' selected':''}>${esc(t.name)}</option>`).join('')}</select><small>Con tutor, la hora de Tutoría (1 h) se agrega sola con su nombre.</small></div>
+  <div class="list">${L.map(x=>`<div class="li"><div>${esc(x.n)} <small>${x.h} h</small></div>${x.id?`<button class="btn small ghost" data-act="gsdel" data-id="${x.id}">Quitar</button>`:''}</div>`).join('')}</div>
+  ${own.length?'':'<button class="btn" data-act="gcust">Personalizar esta lista</button>'}
+  <div class="row"><input type="text" id="gsn" placeholder="Nueva asignatura (ej. Inglés III)" style="flex:1"><input type="number" id="gsh" value="3" min="1" max="10"><button class="btn" data-act="gsadd">Agregar</button></div>
+  ${own.length?'<button class="btn small ghost" data-act="grst">Volver a la lista base</button>':''}</div>`;
+}
+async function ensureOwn(g){if((S.gsub[g]||[]).length)return;const rows=baseFor(S,g).map(x=>({school_id:S.prof.school_id,grupo:g,nombre:x.n,horas:x.h})).filter((r,i,a)=>a.findIndex(y=>y.nombre===r.nombre)===i);if(rows.length)await sb.from('group_subjects').insert(rows)}
+const shiftIdx=sh=>[...Array(PER).keys()].map(k=>(sh==='V'?PER:0)+k).filter(valid);
+function visFor(t){const o=[];if(covers(t,0))o.push(...shiftIdx('M'));if(covers(t,PER))o.push(...shiftIdx('V'));return o}
+function visTable(){if(ui.kind==='g')return shiftIdx(S.gt[ui.sel]==='Vespertino'?'V':'M');return visFor(S.teachers.find(x=>x.id===ui.sel)||{})}
+step=function(dir){let {d,p}=S.clock;for(let i=0;i<P*2;i++){p+=dir;if(p>=P){p=0;d=(d+1)%5}if(p<0){p=P-1;d=(d+4)%5}if(valid(p))break}S.clock={d,p}};
+const _vs=vSetup;
+vSetup=function(){const html=_vs(),sub=ui.sub||'e',parts=html.split('<!--@'),head=parts.shift();
+  const T=[['e','1 · Escuela','Nombre, logo, ciclo escolar y horas de entrada y receso.'],['a','2 · Asignaturas','Agrega las asignaturas de cada semestre y, si aplica, las especialidades con sus submódulos.'],['g','3 · Grupos','Crea los grupos, elige su tutor y ajusta sus asignaturas con ✏️.'],['p','4 · Maestros','Autoriza los correos de tus maestros y revisa quién ya se registró.'],['x','5 · Generar','Cuando todo esté listo, genera el horario equitativo.']];
+  const cur=T.find(x=>x[0]===sub)||T[0];
+  return `<div class="seg">${T.map(x=>`<button class="btn${sub===x[0]?' on':''}" data-act="sub" data-v="${x[0]}">${x[1]}</button>`).join('')}</div><div class="card"><small>${cur[2]}</small></div>`+(sub==='x'?head:(ui.msg?`<div class="msg${ui.msg.ok?'':' bad'}">${esc(ui.msg.t)}</div>`:'')+parts.filter(x=>x[0]===sub).map(x=>x.slice(4)).join(''))};
+function cellEditor(){
+  const c=ui.cell;if(!c||!isAdmin()||ui.kind!=='g')return '';
+  const g=ui.sel,e=at(g,c.d,c.p),subs=subsFor(S,g).map(x=>x.n),sub=ui.csel||(e&&e.s)||subs[0];
+  const opts=S.teachers.filter(t=>covers(t,c.p)&&t.subjects.includes(sub));
+  return `<div class="card hero"><h3>${esc(g)} · ${DAYS_FULL[c.d]} ${TIMES[c.p]}</h3><small>${e?'Ahora: '+esc(e.s)+' con '+esc(tname(e.t)):'Hora libre'}</small>
+  <div class="field"><label for="cs">Materia o submódulo</label><select id="cs" class="f">${subs.map(n=>`<option${n===sub?' selected':''}>${esc(n)}</option>`).join('')}</select></div>
+  <div class="field"><label for="ct">Maestro</label><select id="ct" class="f">${opts.length?opts.map(t=>`<option value="${t.id}"${e&&e.t===t.id?' selected':''}>${esc(t.name)}</option>`).join(''):'<option value="">Nadie imparte esta materia en este turno</option>'}</select></div>
+  <div class="row"><button class="btn primary" data-act="saveC">Guardar</button>${e?'<button class="btn" data-act="clrC">Dejar libre</button>':''}<button class="btn ghost" data-act="noC">Cerrar</button></div></div>`;
+}
+document.addEventListener('change',async ev=>{const t=ev.target;if(t.id==='cs'){ui.csel=t.value;render()}else if(t.id==='gtu'){await sb.from('groups').update({tutor_id:t.value||null}).eq('school_id',S.prof.school_id).eq('nombre',ui.gedit);await load()}});
+function printSheets(list){
+  const y=new Date().getFullYear(),per=(CFG.periodo||(S.ciclo==='par'?'Febrero '+y+' - Julio '+y:'Agosto '+y+' - Enero '+(y+1))).toUpperCase();
+  const sem=['','PRIMERO','SEGUNDO','TERCERO','CUARTO','QUINTO','SEXTO'];
+  const pages=list.map(g=>{
+    const sh=S.gt[g]==='Vespertino'?'V':'M',sub={},rows=[];
+    S.schedule.filter(e=>e.g===g).forEach(e=>{const o=sub[e.s]||(sub[e.s]={h:0,t:new Set()});o.h++;o.t.add(tname(e.t))});
+    const sum=Object.entries(sub).map(([n,o])=>[n,o.h,[...o.t].join(' / ')]);
+    shiftIdx(sh).forEach(p=>{rows.push({p});if(isRecAfter(p))rows.push({rec:RC(p)})});
+    const sc=r=>r?`<td class="a">${esc(r[0])}</td><td>${r[1]}</td><td class="a">${esc(r[2])}</td>`:'<td></td><td></td><td></td>';
+    let body='';
+    for(let i=0;i<Math.max(rows.length,sum.length);i++){
+      const r=rows[i];
+      if(!r)body+=`<tr><td></td><td></td><td></td><td></td><td></td><td></td>${sc(sum[i])}</tr>`;
+      else if(r.rec)body+=`<tr><td class="h">${esc(r.rec).replace('–','<br>')}</td><td colspan="5" class="rc">R E C E S O</td>${sc(sum[i])}</tr>`;
+      else body+=`<tr><td class="h">${TIMES[r.p]}<br>${ENDS[r.p]}</td>${DAYS.map((_,d)=>{const e=at(g,d,r.p);return `<td>${e?esc(e.s):''}</td>`}).join('')}${sc(sum[i])}</tr>`;
+    }
+    return `<section><div class="hd">${S.logo?`<img src="${S.logo}">`:''}<div><b>${esc(S.school)}</b><br>${esc(S.cct||'')}</div></div><h1>SEMESTRE ${esc(per)}</h1><h2>ESPECIALIDAD: ${esc(specName(S.gspec[g])||'Tronco común').toUpperCase()}</h2><p>SEMESTRE: <b>${sem[S.gsem[g]]||''}</b> &nbsp;&nbsp; GRUPO: <b>${esc(g)}</b> &nbsp;&nbsp; TURNO: <b>${sh==='V'?'VESPERTINO':'MATUTINO'}</b>${S.gtutor[g]?`<br>TUTOR(A): <b>${esc(tname(S.gtutor[g]))}</b>`:''}</p><table><tr><th>HORA</th>${DAYS_FULL.map(x=>`<th>${x.toUpperCase()}</th>`).join('')}<th>ASIGNATURA</th><th>HR</th><th>MAESTRO</th></tr>${body}</table><div class="sg"><div>Jefatura de Servicios Docentes</div><div>Subdirección Académica</div><div>Dirección del Plantel</div></div></section>`;
+  }).join('');
+  const w=window.open('','_blank');if(!w){toast('Permite las ventanas emergentes para generar el PDF.');return}
+  w.document.write(`<!doctype html><meta charset="utf-8"><title>Horarios ${esc(S.school)}</title><style>@page{size:letter;margin:12mm}body{font:11px Arial,sans-serif;margin:0}section{page-break-after:always;text-align:center}section:last-child{page-break-after:auto}.hd{display:flex;align-items:center;gap:10px;text-align:left}.hd img{height:50px}h1{font-size:15px;margin:8px 0 2px}h2{font-size:14px;margin:2px 0}table{width:100%;border-collapse:collapse;margin-top:8px}tr{height:34px}th,td{border:1px solid #000;padding:4px;font-size:9px}td.h{white-space:nowrap}td.rc{font-weight:700;letter-spacing:6px;font-size:12px}td.a{text-align:center}.sg{display:flex;justify-content:space-around;margin-top:60px}.sg div{border-top:1px solid #000;padding-top:4px;width:30%}</style>${pages}`);
+  w.document.close();setTimeout(()=>w.print(),500);
+}
+
+const semOpts=()=>(S.ciclo==='par'?[2,4,6]:[1,3,5]).map(n=>`<option value="${n}">${n}°</option>`).join('');
+const specName=id=>(S.specs.find(x=>x.id===id)||{n:''}).n;
+const allNames=()=>[...S.subjects.map(x=>x.n),...S.catalog.map(x=>x.n),...S.sm.map(m=>m.n),...Object.values(S.gsub).flat().map(x=>x.n)].filter((v,i,a)=>v!=='Tutoría'&&a.indexOf(v)===i);
+function misMat(){
+  const t=S.teachers.find(x=>x.id===(S.prof&&S.prof.id));if(isAdmin()||!t)return '';
+  const secs=[...[1,2,3,4,5,6].map(n=>[n+'° semestre',S.catalog.filter(x=>x.sem===n).map(x=>[x.n,x.n])]),...S.specs.map(sp=>['Especialidad: '+sp.n,S.sm.filter(m=>m.spec===sp.id).map(m=>[m.n,m.sem+'° · '+m.n])])];
+  const known=new Set(secs.flatMap(x=>x[1].map(i=>i[0])));
+  const otros=[...new Set(Object.values(S.gsub).flat().map(x=>x.n))].filter(n=>n!=='Tutoría'&&!known.has(n));
+  if(otros.length)secs.push(['Otras',otros.map(n=>[n,n])]);
+  const body=secs.filter(x=>x[1].length).map(x=>`<b>${esc(x[0])}</b><div class="subs">${x[1].map(([v,l])=>`<label><input type="checkbox" class="mm" value="${esc(v)}"${t.subjects.includes(v)?' checked':''}> ${esc(l)}</label>`).join('')}</div>`).join('');
+  return `<div class="card"><h3>Mis materias</h3><small>Marca las asignaturas que puedes impartir. Dirección las usa al generar el horario.</small>${body||'<small>Dirección aún no ha agregado asignaturas.</small>'}<button class="btn" data-act="saveM">Guardar</button><small>Dirección debe volver a generar el horario para aplicar los cambios.</small></div>`;
+}
+const _vl=vLogin;
+vLogin=function(){return ui.rec?`<div class="card hero login"><div class="logo"><b>Nueva contraseña</b></div>${ui.msg?`<div class="msg${ui.msg.ok?'':' bad'}">${esc(ui.msg.t)}</div>`:''}<div class="field"><label for="np">Nueva contraseña (8 o más caracteres, con letras y números)</label><input type="password" id="np" autocomplete="new-password"></div><button class="btn primary" data-act="setpw">Guardar contraseña</button></div>`:_vl()};
+async function load(){
+  const adm=S.prof&&S.prof.rol==='admin';
+  const [t,g,s,st,al,sp,sm,cat,gs]=await Promise.all([sb.from('teachers').select('*'),sb.from('groups').select('*'),sb.from('schedule').select('*'),sb.from('status').select('*'),adm?sb.from('allowed_teachers').select('*'):null,sb.from('specialties').select('*'),sb.from('submodules').select('*'),sb.from('semester_subjects').select('*'),sb.from('group_subjects').select('*')]);
+  S.teachers=(t.data||[]).filter(x=>x.rol!=='admin').map(x=>({id:x.id,name:x.nombre,subjects:x.materias||[],turno:x.turno,prefs:x.prefs||[]}));
+  S.users=S.teachers;S.admins=(t.data||[]).filter(x=>x.rol==='admin').map(x=>({id:x.id,name:x.nombre,uid:x.user_id}));S.gt={};S.gsem={};S.gspec={};S.gtutor={};(g.data||[]).forEach(x=>{S.gt[x.nombre]=x.turno;S.gsem[x.nombre]=x.semestre;S.gspec[x.nombre]=x.specialty_id;S.gtutor[x.nombre]=x.tutor_id});S.specs=(sp&&sp.data||[]).map(x=>({id:x.id,n:x.nombre}));S.sm=(sm&&sm.data||[]).map(x=>({id:x.id,spec:x.specialty_id,sem:x.semestre,n:x.nombre,h:x.horas}));S.catalog=(cat&&cat.data||[]).map(x=>({id:x.id,sem:x.semestre,n:x.nombre,h:x.horas}));S.gsub={};(gs&&gs.data||[]).forEach(x=>(S.gsub[x.grupo]=S.gsub[x.grupo]||[]).push({id:x.id,n:x.nombre,h:x.horas}));S.groups=Object.keys(S.gt).sort();S.allowed=al&&al.data||[];
+  S.schedule=(s.data||[]).map(x=>({id:x.id,g:x.grupo,s:x.materia,t:x.teacher_id,d:x.dia,p:x.hora}));
+  S.status={};(st.data||[]).forEach(x=>S.status[x.dia+'|'+x.hora+'|'+x.teacher_id]=x.estado);
+  if(!S.teachers.some(x=>x.id===S.me))S.me=S.teachers[0]?S.teachers[0].id:'';
+  render();
+}
+let ch;
+function subscribe(){
+  if(ch)return;let tm;const f=()=>{clearTimeout(tm);tm=setTimeout(load,300)};
+  ch=sb.channel('planify').on('postgres_changes',{event:'*',schema:'public',table:'status'},f).on('postgres_changes',{event:'*',schema:'public',table:'schedule'},f).subscribe();
+}
+const getP=async uid=>await sb.from('teachers').select('*').eq('user_id',uid).maybeSingle();
+async function afterAuth(cct){if(ui.rec||location.hash.includes('type=recovery')){ui.rec=true;S.sess=null;render();return}
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){S.sess=null;S.prof=null;render();return}
+  let {data:p,error:pe}=await getP(session.user.id);
+  if(!p){
+    let pend=null;try{pend=JSON.parse(localStorage.getItem('planify.pend'))}catch(e){}
+    if(pend&&pend.email===(session.user.email||'').toLowerCase()){
+      const r=await sb.rpc('register_teacher',{p_cct:pend.cct,p_nombre:pend.name,p_materias:pend.subs,p_turno:pend.turno});
+      if(r.error)pe=r.error;else{localStorage.removeItem('planify.pend');({data:p,error:pe}=await getP(session.user.id))}
+    }
+  }
+  if(!p){S.sess=null;S.prof=null;ui.msg={ok:0,t:'No se encontró perfil para '+session.user.email+'. '+(pe?pe.message:'Tu correo debe estar autorizado por Dirección de tu escuela y la cuenta debe crearse con "Crear cuenta de maestro".')};await sb.auth.signOut();render();return}
+  const {data:sc}=await sb.from('schools').select('*').eq('id',p.school_id).maybeSingle();
+  if(cct&&(!sc||sc.cct!==cct)){S.sess=null;S.prof=null;ui.msg={ok:0,t:'La clave del plantel (CCT) no corresponde a tu cuenta.'};await sb.auth.signOut();render();return}
+  if(sc){S.school=sc.nombre;if(sc.logo)S.logo=sc.logo;S.ciclo=sc.ciclo||'impar';S.cct=sc.cct;S.hasHor=!!sc.horario;if(sc.horario){CFG.M={...CFG.M,...(sc.horario.M||{})};CFG.V={...CFG.V,...(sc.horario.V||{})};CFG.periodo=sc.horario.periodo||''}buildTimes()}
+  S.sess=session.user.id;S.prof={id:p.id,name:p.nombre,rol:p.rol,school_id:p.school_id};if(p.rol!=='admin')S.me=p.id;
+  ui.msg=null;ui.tab='me';seen=new Set();subscribe();await load();
+}
+const DBACTS=['login','reg','logout','set','acc','gen','delT','delG','addG','addA','delA','ciclo','addE','delE','addM','delM','saveM','forgot','setpw','sub','cell','noC','clrC','saveC','saveH','pdf1','pdfall','gedit','gclose','gcust','gsadd','gsdel','grst','cadd','cdel','savePg','saveTu','advance'];
+document.addEventListener('click',async ev=>{
+  const b=ev.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;if(!DBACTS.includes(a))return;
+  ev.stopPropagation();if(a!=='delT'&&a!=='delG'&&a!=='advance')ui.confirm=null;
+  try{
+    if(a==='login'){
+      const cct=$('#lc').value.trim().toUpperCase();
+      if(!cct){ui.msg={ok:0,t:'Escribe la clave del plantel (CCT).'};render();return}
+      if(Date.now()<LOCK.u){ui.msg={ok:0,t:'Demasiados intentos fallidos. Espera 1 minuto.'};render();return}const {error}=await sb.auth.signInWithPassword({email:$('#lu').value.trim(),password:$('#lp').value});
+      if(error){if(++LOCK.n>=5){LOCK.u=Date.now()+60000;LOCK.n=0}ui.msg={ok:0,t:'No se pudo entrar: '+error.message};render()}else await afterAuth(cct);
+    }else if(a==='reg'){
+      const name=$('#rn').value.trim(),email=$('#ru').value.trim(),pw=$('#rp').value,cct=$('#rc').value.trim().toUpperCase(),turno=$('#rt').value;
+      const subs=[...document.querySelectorAll('.ns:checked')].map(x=>S.subjects[+x.value].n);
+      if(!name||!email||!cct||pw.length<8||!/[A-Za-z]/.test(pw)||!/\d/.test(pw))ui.msg={ok:0,t:'Llena todos los campos. La contraseña debe tener 8 o más caracteres, con letras y números.'};
+      else{
+        const ck=await sb.rpc('check_registration',{p_cct:cct,p_email:email});
+        if(!ck.data)ui.msg={ok:0,t:'Ese correo no está autorizado por la escuela, o la clave (CCT) es incorrecta. Pide a Dirección que autorice tu correo.'};
+        else{
+          const {data,error}=await sb.auth.signUp({email,password:pw});
+          if(error)ui.msg={ok:0,t:error.message};
+          else{
+            localStorage.setItem('planify.pend',JSON.stringify({email:email.toLowerCase(),cct,name,subs,turno}));
+            ui.reg=false;
+            if(data.session){await afterAuth(cct);return}
+            ui.msg={ok:1,t:'Cuenta creada. Revisa tu correo, confirma tu cuenta y luego inicia sesión con tu clave de plantel.'};
+          }
+        }
+      }
+      render();
+    }else if(a==='logout'){await sb.auth.signOut();S.sess=null;S.prof=null;ui.msg=null;render()}
+    else if(a==='set'){
+      S.status[S.clock.d+'|'+S.clock.p+'|'+b.dataset.t]=b.dataset.v;render();
+      await sb.from('status').upsert({teacher_id:b.dataset.t,dia:S.clock.d,hora:S.clock.p,estado:b.dataset.v});
+    }else if(a==='acc'){
+      const before=S.schedule.map(x=>({...x}));acceptOffer(b.dataset.key);
+      const ups=S.schedule.filter(x=>{const o=before.find(y=>y.id===x.id);return o&&(o.d!==x.d||o.p!==x.p)});
+      const gone=before.filter(o=>!S.schedule.some(x=>x.id===o.id));
+      render();
+      await Promise.all([...ups.map(x=>sb.from('schedule').update({dia:x.d,hora:x.p}).eq('id',x.id)),...gone.map(o=>sb.from('schedule').delete().eq('id',o.id))]);
+      await load();
+    }else if(a==='gen'){
+      regen();
+      const rows=S.schedule.map(x=>({grupo:x.g,materia:x.s,teacher_id:x.t,dia:x.d,hora:x.p,school_id:S.prof.school_id}));
+      await sb.from('schedule').delete().not('id','is',null);
+      if(rows.length){const r=await sb.from('schedule').insert(rows);if(r.error)ui.msg={ok:0,t:'Error al guardar: '+r.error.message}}
+      await load();
+    }else if(a==='delT'){
+      const id=b.dataset.t;if(ui.confirm!==id){ui.confirm=id;render();return}
+      ui.confirm=null;await sb.from('teachers').delete().eq('id',id);await load();
+    }else if(a==='delG'){
+      const g=b.dataset.g,k='g:'+g;if(ui.confirm!==k){ui.confirm=k;render();return}
+      ui.confirm=null;await sb.from('schedule').delete().eq('grupo',g);await sb.from('group_subjects').delete().eq('grupo',g);await sb.from('groups').delete().eq('nombre',g);await load();
+    }else if(a==='addG'){
+      const v=$('#ng').value.trim().toUpperCase();
+      if(v&&!S.groups.includes(v)){await sb.from('groups').insert({nombre:v,turno:$('#gt').value,semestre:+$('#gs').value,specialty_id:$('#gp').value||null,tutor_id:$('#gtt').value||null,school_id:S.prof.school_id});await load()}
+    }else if(a==='addA'){
+      const e=$('#ae').value.trim().toLowerCase();if($('#ar').value==='admin'&&!confirm('Un administrador puede cambiar todo en tu escuela. ¿Seguro que quieres autorizarlo?'))return;
+      if(e){const r=await sb.from('allowed_teachers').insert({school_id:S.prof.school_id,email:e,turno:$('#at').value,rol:$('#ar').value});if(r.error)ui.msg={ok:0,t:r.error.message};await load()}
+    }else if(a==='delA'){await sb.from('allowed_teachers').delete().eq('id',b.dataset.id);await load()
+    }else if(a==='ciclo'){S.ciclo=b.dataset.v;await sb.from('schools').update({ciclo:S.ciclo}).eq('id',S.prof.school_id);render()
+    }else if(a==='addE'){const v=$('#en').value.trim();if(v){const r=await sb.from('specialties').insert({school_id:S.prof.school_id,nombre:v});if(r.error)ui.msg={ok:0,t:r.error.message};await load()}
+    }else if(a==='delE'){await sb.from('specialties').delete().eq('id',b.dataset.id);await load()
+    }else if(a==='delM'){await sb.from('submodules').delete().eq('id',b.dataset.id);await load()
+    }else if(a==='addM'){const n=$('#mn').value.trim(),sp=$('#me2').value;if(n&&sp){await sb.from('submodules').insert({school_id:S.prof.school_id,specialty_id:sp,semestre:+$('#ms').value,nombre:n,horas:+$('#mh').value||4});await load()}
+    }else if(a==='saveM'){const r=await sb.rpc('set_my_subjects',{p_materias:[...new Set([...document.querySelectorAll('.mm:checked')].map(x=>x.value))]});toast(r.error?r.error.message:'Materias guardadas.');await load()
+    }else if(a==='forgot'){const em=$('#lu').value.trim();
+      if(!em)ui.msg={ok:0,t:'Escribe tu correo en el campo de arriba y toca de nuevo "Olvidé mi contraseña".'};
+      else{await sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname});ui.msg={ok:1,t:'Si el correo está registrado, te enviamos un enlace para crear una contraseña nueva.'}}
+      render()
+    }else if(a==='setpw'){const pw=$('#np').value;
+      if(pw.length<8||!/[A-Za-z]/.test(pw)||!/\\d/.test(pw)){ui.msg={ok:0,t:'Mínimo 8 caracteres, con letras y números.'};render();return}
+      const {error}=await sb.auth.updateUser({password:pw});
+      if(error){ui.msg={ok:0,t:error.message};render();return}
+      ui.rec=false;history.replaceState(null,'',location.pathname);await sb.auth.signOut();S.sess=null;S.prof=null;ui.msg={ok:1,t:'Contraseña actualizada. Inicia sesión.'};render()
+    }else if(a==='sub'){ui.sub=b.dataset.v;ui.msg=null;render()
+    }else if(a==='cell'){ui.cell={d:+b.dataset.d,p:+b.dataset.p};ui.csel=null;render()
+    }else if(a==='noC'){ui.cell=null;render()
+    }else if(a==='clrC'){const o=at(ui.sel,ui.cell.d,ui.cell.p);if(o)await sb.from('schedule').delete().eq('id',o.id);ui.cell=null;await load()
+    }else if(a==='saveC'){
+      const c=ui.cell,g=ui.sel,sub=$('#cs').value,tid=$('#ct').value;
+      if(!tid){toast('No hay maestros disponibles para esa materia en ese turno.');return}
+      const busy=tat(tid,c.d,c.p);
+      if(busy&&busy.g!==g){toast(tname(tid)+' ya tiene clase con '+busy.g+' a esa hora.');return}
+      const old=at(g,c.d,c.p);if(old)await sb.from('schedule').delete().eq('id',old.id);
+      const r=await sb.from('schedule').insert({grupo:g,materia:sub,teacher_id:tid,dia:c.d,hora:c.p,school_id:S.prof.school_id});
+      if(r.error)toast(r.error.message);ui.cell=null;await load()
+    }else if(a==='saveH'){
+      const nh={periodo:$('#hp').value.trim()};let bad=false;
+      for(const sh of ['M','V']){const c={ini:$('#hi-'+sh).value.trim(),dur:+$('#hd-'+sh).value,n:+$('#hn-'+sh).value,rec:+$('#hr-'+sh).value,recDur:+$('#hc-'+sh).value};
+        if(!/^\d{1,2}:\d{2}$/.test(c.ini)||!(c.dur>=30&&c.dur<=90)||!(c.n>=0&&c.n<=10)||!(c.rec>=0)||!(c.recDur>=0))bad=true;nh[sh]=c}
+      if(bad){toast('Revisa los datos: entrada tipo 07:00, de 30 a 90 min por hora y máximo 10 horas.');return}
+      CFG=nh;buildTimes();if(!valid(S.clock.p))step(1);
+      const r=await sb.from('schools').update({horario:CFG}).eq('id',S.prof.school_id);
+      toast(r.error?r.error.message:'Jornada guardada. Genera el horario de nuevo para aplicarla.');render()
+    }else if(a==='pdf1'){printSheets([ui.sel])
+    }else if(a==='pdfall'){printSheets(S.groups)
+    }else if(a==='gedit'){ui.gedit=b.dataset.g;ui.tab='setup';ui.sub='g';render();window.scrollTo(0,0)
+    }else if(a==='gclose'){ui.gedit=null;render()
+    }else if(a==='gcust'){await ensureOwn(ui.gedit);await load()
+    }else if(a==='gsadd'){const n=$('#gsn').value.trim(),h=+$('#gsh').value||3;
+      if(n){await ensureOwn(ui.gedit);const r=await sb.from('group_subjects').insert({school_id:S.prof.school_id,grupo:ui.gedit,nombre:n,horas:h});if(r.error)toast(r.error.code==='23505'?'Esa asignatura ya está en la lista.':r.error.message);await load()}
+    }else if(a==='gsdel'){await sb.from('group_subjects').delete().eq('id',b.dataset.id);await load()
+    }else if(a==='grst'){await sb.from('group_subjects').delete().eq('grupo',ui.gedit);await load()
+    }else if(a==='cadd'){const n=$('#cn').value.trim();
+      if(n){const r=await sb.from('semester_subjects').insert({school_id:S.prof.school_id,semestre:+$('#cs2').value,nombre:n,horas:+$('#cx').value||3});if(r.error)toast(r.error.message);await load()}
+    }else if(a==='cdel'){await sb.from('semester_subjects').delete().eq('id',b.dataset.id);await load()
+    }else if(a==='savePg'){const r=await sb.rpc('set_my_prefs',{p_prefs:[...document.querySelectorAll('.pg:checked')].map(x=>x.value)});toast(r.error?r.error.message:'Listo, tus grupos se tomarán en cuenta al generar el horario.');await load()
+    }else if(a==='saveTu'){const r=await sb.rpc('set_my_tutor',{p_group:$('#tu').value||null});toast(r.error?r.error.message:'Tutoría guardada.');await load()
+    }else if(a==='advance'){
+      if(ui.confirm!=='adv'){ui.confirm='adv';render();return}
+      ui.confirm=null;const sid=S.prof.school_id;
+      for(const g of S.groups){const old=S.gsem[g]||1,ns=old+1;
+        if(ns>6){await sb.from('schedule').delete().eq('grupo',g);await sb.from('group_subjects').delete().eq('grupo',g);await sb.from('groups').delete().eq('school_id',sid).eq('nombre',g)}
+        else await sb.from('groups').update({semestre:ns,nombre:(/^\d/.test(g)&&+g[0]===old)?String(ns)+g.slice(1):g}).eq('school_id',sid).eq('nombre',g)}
+      await sb.from('schedule').delete().eq('school_id',sid);await sb.from('group_subjects').delete().eq('school_id',sid);
+      S.ciclo=S.ciclo==='par'?'impar':'par';await sb.from('schools').update({ciclo:S.ciclo}).eq('id',sid);
+      toast('Ciclo avanzado. Agrega los grupos nuevos de 1.er semestre y genera el horario.');await load()}
+  }catch(e){ui.msg={ok:0,t:'Error de conexión: '+e.message};render()}
+},true);
+let idle;const bump=()=>{clearTimeout(idle);idle=setTimeout(async()=>{if(S.sess){await sb.auth.signOut();S.sess=null;S.prof=null;ui.msg={ok:0,t:'Sesión cerrada por inactividad.'};render()}},15*60*1000)};
+['click','keydown','touchstart'].forEach(e=>document.addEventListener(e,bump));bump();
+sb.auth.onAuthStateChange(ev=>{if(ev==='PASSWORD_RECOVERY'){ui.rec=true;S.sess=null;render()}});
+boot();
+afterAuth();
+</script></body></html>
