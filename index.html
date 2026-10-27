@@ -157,12 +157,12 @@ function vTop(){
 }
 function vLogin(){
   const m=ui.msg?`<div class="msg${ui.msg.ok?'':' bad'}">${esc(ui.msg.t)}</div>`:'';
-  if(ui.reg)return `<div class="card hero login"><div class="logo">${logoImg()}<b>Crear cuenta</b><small>Para maestros del ${esc(S.school)}</small></div>${m}
+  if(ui.reg)return `<div class="card hero login"><div class="logo">${logoImg()}<b>Crear cuenta</b><small>Escribe la clave de tu plantel. Dirección aprobará tu acceso.</small></div>${m}
     <div class="field"><label for="rc">Clave del plantel (CCT)</label><input type="text" id="rc" autocapitalize="characters"></div><div class="field"><label for="rn">Nombre y apellido</label><input type="text" id="rn"></div><div class="field"><label for="rt">Turno</label><select id="rt" class="f"><option>Matutino</option><option>Vespertino</option><option>Ambos</option></select></div>
     <div class="field"><label for="ru">Correo institucional</label><input type="text" id="ru" autocapitalize="none"></div>
     <div class="field"><label for="rp">Contraseña</label><input type="password" id="rp"></div>
     <small>Tus materias las eliges al entrar, en <b>Mi día → Mis materias</b>.</small>
-    <button class="btn primary" data-act="reg">Crear cuenta y entrar</button><button class="btn ghost" data-act="toreg">Ya tengo cuenta</button></div>`;
+    <button class="btn primary" data-act="reg">Enviar solicitud</button><button class="btn ghost" data-act="toreg">Ya tengo cuenta</button></div>`;
   return `<div class="card hero login"><div class="logo">${logoImg()}<b>Planify</b><small>👋 ¡Bienvenido! Inicia sesión para ver tus horarios</small></div>${m}
     <div class="field"><label for="lc">Clave del plantel (CCT)</label><input type="text" id="lc" autocapitalize="characters"></div><div class="field"><label for="lu">Correo</label><input type="text" id="lu" autocapitalize="none"></div>
     <div class="field"><label for="lp">Contraseña</label><input type="password" id="lp"></div>
@@ -263,8 +263,9 @@ function vSetup(){
   ${S.specs.map(x=>`<div class="stack"><div class="row"><b>${esc(x.n)}</b><button class="btn small ghost" data-act="delE" data-id="${x.id}">Quitar</button></div><div class="list">${S.sm.filter(m=>m.spec===x.id).sort((a,b)=>a.sem-b.sem).map(m=>`<div class="li"><div>${m.sem}° · ${esc(m.n)} <small>${m.h} h</small></div><button class="btn small ghost" data-act="delM" data-id="${m.id}">Quitar</button></div>`).join('')}</div></div>`).join('')}
   <div class="row"><input type="text" id="en" placeholder="Nueva especialidad (ej. Programación)" style="flex:1"><button class="btn" data-act="addE">Agregar</button></div>
   <div class="field"><label for="mn">Agregar submódulo a una especialidad</label><div class="row"><select id="me2" class="f" style="flex:1">${S.specs.map(x=>`<option value="${x.id}">${esc(x.n)}</option>`).join('')}</select><select id="ms" class="f" style="width:90px">${semOpts()}</select><input type="number" id="mh" value="4" min="1" max="10"></div><input type="text" id="mn" placeholder="Nombre del submódulo"><button class="btn" data-act="addM">Agregar submódulo</button></div></div>
-  <!--@p--><div class="card"><h3>Administradores (${S.admins.length})</h3><small>Pueden cambiar todo en tu escuela. Para agregar otro, autoriza su correo abajo con el rol Administrador; después él crea su cuenta.</small><div class="list">${S.admins.map(a=>`<div class="li"><div><b>${esc(a.name)}</b>${a.uid===S.sess?' '+chip('info','Tú'):''}</div>${a.uid===S.sess?'':`<button class="btn small ghost${ui.confirm===a.id?' confirm':''}" data-act="delT" data-t="${a.id}">${ui.confirm===a.id?'¿Seguro?':'Quitar'}</button>`}</div>`).join('')}</div></div>
-  <!--@p--><div class="card"><h3>Correos autorizados (${S.allowed.length})</h3><small>Solo estos correos pueden crear cuenta en tu escuela. Elige el rol: Maestro, o Administrador para dar acceso total.</small><div class="list">${S.allowed.map(a=>`<div class="li"><div><b>${esc(a.email)}</b> <small>${esc(a.turno||'')}</small>${a.rol==='admin'?' '+chip('info','Administrador'):''}</div><button class="btn small ghost" data-act="delA" data-id="${a.id}">Quitar</button></div>`).join('')}</div><div class="field"><label for="ae">Correo institucional</label><input type="text" id="ae" placeholder="maestro@escuela.edu.mx" autocapitalize="none"></div><div class="row"><select id="at" class="f" style="flex:1"><option>Matutino</option><option>Vespertino</option><option>Ambos</option></select><select id="ar" class="f" style="flex:1"><option value="teacher">Maestro</option><option value="admin">Administrador</option></select><button class="btn" data-act="addA">Autorizar</button></div></div>
+  <!--@p--><div class="card"><h3>Administradores (${S.admins.length})</h3><small>Pueden cambiar todo en tu escuela. Para agregar otro, aprueba su solicitud como administrador.</small><div class="list">${S.admins.map(a=>`<div class="li"><div><b>${esc(a.name)}</b>${a.uid===S.sess?' '+chip('info','Tú'):''}</div>${a.uid===S.sess?'':`<button class="btn small ghost${ui.confirm===a.id?' confirm':''}" data-act="delT" data-t="${a.id}">${ui.confirm===a.id?'¿Seguro?':'Quitar'}</button>`}</div>`).join('')}</div></div>
+  <!--@p--><div class="card"><h3>Solicitudes de acceso (${S.requests.length})</h3><small>Cuando alguien crea su cuenta con la clave de tu plantel, aparece aquí. Aprueba solo a personas que conozcas: revisa su nombre y su correo.</small>
+  ${S.requests.length?`<div class="list">${S.requests.map(q=>`<div class="li" style="flex-wrap:wrap"><div><b>${esc(q.nombre)}</b><br><small>${esc(q.email)} · ${esc(q.turno)}</small></div><div class="row"><button class="btn small primary" data-act="apT" data-id="${q.id}" data-t="${esc(q.turno)}">Aprobar como maestro</button><button class="btn small" data-act="apA" data-id="${q.id}" data-t="${esc(q.turno)}">Como administrador</button><button class="btn small ghost" data-act="rej" data-id="${q.id}">Rechazar</button></div></div>`).join('')}</div>`:'<small>No hay solicitudes pendientes. 🎉</small>'}</div>
   <!--@g-->${groupEditor()}<!--@g--><div class="card"><h3>Grupos (${S.groups.length})</h3><div class="subs">${S.groups.map(g=>`<span class="chip info">${esc(g)} · ${(S.gt[g]||'M')[0]} · ${S.gsem[g]||1}° ${esc(specName(S.gspec[g]))} <button class="btn small ghost" style="min-height:0;padding:0 4px;border:0" data-act="gedit" data-g="${esc(g)}" aria-label="Materias de ${esc(g)}">✏️</button><button class="btn small ghost${ui.confirm==='g:'+g?' confirm':''}" style="min-height:0;padding:0 4px;border:0" data-act="delG" data-g="${esc(g)}" aria-label="Quitar grupo ${esc(g)}">${ui.confirm==='g:'+g?'¿Seguro?':'×'}</button></span>`).join('')}</div>
     <div class="stack"><b>Nuevo grupo</b>
     <div class="field"><label for="ng">Nombre del grupo</label><input type="text" id="ng" placeholder="Ej. 3A"></div>
@@ -291,7 +292,7 @@ function render(){
   $('#main').innerHTML={me:vMe,school:vSchool,table:vTable,setup:vSetup}[ui.tab]();
   const n=offers().filter(o=>o.t===meId()).length;
   $('#nav').style.gridTemplateColumns=`repeat(${tabs.length},1fr)`;
-  $('#nav').innerHTML=tabs.map(([k,l])=>`<button class="${ui.tab===k?'on':''}" data-tab="${k}">${ICONS[k]}<span>${l}</span>${k==='me'&&n?`<i class="badge">${n}</i>`:''}</button>`).join('');
+  $('#nav').innerHTML=tabs.map(([k,l])=>`<button class="${ui.tab===k?'on':''}" data-tab="${k}">${ICONS[k]}<span>${l}</span>${k==='me'&&n?`<i class="badge">${n}</i>`:''}${k==='setup'&&S.requests.length?`<i class="badge">${S.requests.length}</i>`:''}</button>`).join('');
   notifyNew();
 }
 let seen=new Set(),toastTimer;
@@ -358,13 +359,14 @@ function boot(){
 <script>
 const SB_URL='https://rscorenutlyzflzgsbhm.supabase.co',SB_KEY='sb_publishable_7Og4mvxWwdrNz3KujOa9cQ__Ws5gK9p';
 const sb=supabase.createClient(SB_URL,SB_KEY);
-S.gt={};S.gsem={};S.gspec={};S.gtutor={};S.catalog=[];S.gsub={};S.admins=[];S.specs=[];S.sm=[];S.ciclo='impar';S.allowed=[];
+S.gt={};S.gsem={};S.gspec={};S.gtutor={};S.catalog=[];S.gsub={};S.admins=[];S.specs=[];S.sm=[];S.ciclo='impar';S.allowed=[];S.requests=[];
 const LOCK={n:0,u:0};
 function pasos(){
   if(!isAdmin())return '';
-  const st=[[S.hasHor,'Configura la jornada y el receso','Configurar → 1 · Escuela'],[S.catalog.length>0,'Agrega las asignaturas de cada semestre','Configurar → 2 · Asignaturas'],[S.groups.length>0,'Crea tus grupos','Configurar → 3 · Grupos'],[S.allowed.length>0,'Autoriza los correos de tus maestros','Configurar → 4 · Maestros'],[S.teachers.length>0,'Espera a que tus maestros creen su cuenta',''],[S.schedule.length>0,'Genera el horario equitativo','Configurar → 5 · Generar']];
-  if(st.every(x=>x[0]))return '';
-  return `<div class="card hero"><h3>🚀 Primeros pasos</h3><div class="list">${st.map(x=>`<div class="li"><div>${x[0]?'✅':'⬜'} ${x[1]}${x[2]?` <small>· ${x[2]}</small>`:''}</div></div>`).join('')}</div></div>`;
+  const rq=S.requests.length?`<div class="card alert"><b>🔔 ${S.requests.length} solicitud(es) de acceso por aprobar</b><small>Configurar → 4 · Maestros</small></div>`:'';
+  const st=[[S.hasHor,'Configura la jornada y el receso','Configurar → 1 · Escuela'],[S.catalog.length>0,'Agrega las asignaturas de cada semestre','Configurar → 2 · Asignaturas'],[S.groups.length>0,'Crea tus grupos','Configurar → 3 · Grupos'],[S.teachers.length>0||S.requests.length>0,'Pasa el enlace y la clave del plantel a tus maestros','Configurar → 4 · Maestros'],[S.teachers.length>0,'Aprueba sus solicitudes','Configurar → 4 · Maestros'],[S.schedule.length>0,'Genera el horario equitativo','Configurar → 5 · Generar']];
+  if(st.every(x=>x[0]))return rq;
+  return rq+`<div class="card hero"><h3>🚀 Primeros pasos</h3><div class="list">${st.map(x=>`<div class="li"><div>${x[0]?'✅':'⬜'} ${x[1]}${x[2]?` <small>· ${x[2]}</small>`:''}</div></div>`).join('')}</div></div>`;
 }
 function misPref(){
   const t=S.teachers.find(x=>x.id===(S.prof&&S.prof.id));if(isAdmin()||!t||!S.groups.length)return '';
@@ -391,7 +393,7 @@ function visTable(){if(ui.kind==='g')return shiftIdx(S.gt[ui.sel]==='Vespertino'
 step=function(dir){let {d,p}=S.clock;for(let i=0;i<P*2;i++){p+=dir;if(p>=P){p=0;d=(d+1)%5}if(p<0){p=P-1;d=(d+4)%5}if(valid(p))break}S.clock={d,p}};
 const _vs=vSetup;
 vSetup=function(){const html=_vs(),sub=ui.sub||'e',parts=html.split('<!--@'),head=parts.shift();
-  const T=[['e','1 · Escuela','Nombre, logo, ciclo escolar y horas de entrada y receso.'],['a','2 · Asignaturas','Agrega las asignaturas de cada semestre y, si aplica, las especialidades con sus submódulos.'],['g','3 · Grupos','Crea los grupos, elige su tutor y ajusta sus asignaturas con ✏️.'],['p','4 · Maestros','Autoriza los correos de tus maestros y revisa quién ya se registró.'],['x','5 · Generar','Cuando todo esté listo, genera el horario equitativo.']];
+  const T=[['e','1 · Escuela','Nombre, logo, ciclo escolar y horas de entrada y receso.'],['a','2 · Asignaturas','Agrega las asignaturas de cada semestre y, si aplica, las especialidades con sus submódulos.'],['g','3 · Grupos','Crea los grupos, elige su tutor y ajusta sus asignaturas con ✏️.'],['p','4 · Maestros','Aprueba las solicitudes de tus maestros y revisa quién ya tiene acceso.'],['x','5 · Generar','Cuando todo esté listo, genera el horario equitativo.']];
   const cur=T.find(x=>x[0]===sub)||T[0];
   return `<div class="seg">${T.map(x=>`<button class="btn${sub===x[0]?' on':''}" data-act="sub" data-v="${x[0]}">${x[1]}</button>`).join('')}</div><div class="card"><small>${cur[2]}</small></div>`+(sub==='x'?head:(ui.msg?`<div class="msg${ui.msg.ok?'':' bad'}">${esc(ui.msg.t)}</div>`:'')+parts.filter(x=>x[0]===sub).map(x=>x.slice(4)).join(''))};
 function cellEditor(){
@@ -443,9 +445,9 @@ const _vl=vLogin;
 vLogin=function(){return ui.rec?`<div class="card hero login"><div class="logo"><b>Nueva contraseña</b></div>${ui.msg?`<div class="msg${ui.msg.ok?'':' bad'}">${esc(ui.msg.t)}</div>`:''}<div class="field"><label for="np">Nueva contraseña (8 o más caracteres, con letras y números)</label><input type="password" id="np" autocomplete="new-password"></div><button class="btn primary" data-act="setpw">Guardar contraseña</button></div>`:_vl()};
 async function load(){
   const adm=S.prof&&S.prof.rol==='admin';
-  const [t,g,s,st,al,sp,sm,cat,gs]=await Promise.all([sb.from('teachers').select('*'),sb.from('groups').select('*'),sb.from('schedule').select('*'),sb.from('status').select('*'),adm?sb.from('allowed_teachers').select('*'):null,sb.from('specialties').select('*'),sb.from('submodules').select('*'),sb.from('semester_subjects').select('*'),sb.from('group_subjects').select('*')]);
+  const [t,g,s,st,al,sp,sm,cat,gs]=await Promise.all([sb.from('teachers').select('*'),sb.from('groups').select('*'),sb.from('schedule').select('*'),sb.from('status').select('*'),adm?sb.from('access_requests').select('*').order('created_at'):null,sb.from('specialties').select('*'),sb.from('submodules').select('*'),sb.from('semester_subjects').select('*'),sb.from('group_subjects').select('*')]);
   S.teachers=(t.data||[]).filter(x=>x.rol!=='admin').map(x=>({id:x.id,name:x.nombre,subjects:x.materias||[],turno:x.turno,prefs:x.prefs||[]}));
-  S.users=S.teachers;S.admins=(t.data||[]).filter(x=>x.rol==='admin').map(x=>({id:x.id,name:x.nombre,uid:x.user_id}));S.gt={};S.gsem={};S.gspec={};S.gtutor={};(g.data||[]).forEach(x=>{S.gt[x.nombre]=x.turno;S.gsem[x.nombre]=x.semestre;S.gspec[x.nombre]=x.specialty_id;S.gtutor[x.nombre]=x.tutor_id});S.specs=(sp&&sp.data||[]).map(x=>({id:x.id,n:x.nombre}));S.sm=(sm&&sm.data||[]).map(x=>({id:x.id,spec:x.specialty_id,sem:x.semestre,n:x.nombre,h:x.horas}));S.catalog=(cat&&cat.data||[]).map(x=>({id:x.id,sem:x.semestre,n:x.nombre,h:x.horas}));S.gsub={};(gs&&gs.data||[]).forEach(x=>(S.gsub[x.grupo]=S.gsub[x.grupo]||[]).push({id:x.id,n:x.nombre,h:x.horas}));S.groups=Object.keys(S.gt).sort();S.allowed=al&&al.data||[];
+  S.users=S.teachers;S.admins=(t.data||[]).filter(x=>x.rol==='admin').map(x=>({id:x.id,name:x.nombre,uid:x.user_id}));S.gt={};S.gsem={};S.gspec={};S.gtutor={};(g.data||[]).forEach(x=>{S.gt[x.nombre]=x.turno;S.gsem[x.nombre]=x.semestre;S.gspec[x.nombre]=x.specialty_id;S.gtutor[x.nombre]=x.tutor_id});S.specs=(sp&&sp.data||[]).map(x=>({id:x.id,n:x.nombre}));S.sm=(sm&&sm.data||[]).map(x=>({id:x.id,spec:x.specialty_id,sem:x.semestre,n:x.nombre,h:x.horas}));S.catalog=(cat&&cat.data||[]).map(x=>({id:x.id,sem:x.semestre,n:x.nombre,h:x.horas}));S.gsub={};(gs&&gs.data||[]).forEach(x=>(S.gsub[x.grupo]=S.gsub[x.grupo]||[]).push({id:x.id,n:x.nombre,h:x.horas}));S.groups=Object.keys(S.gt).sort();S.requests=al&&al.data||[];S.allowed=[];
   S.schedule=(s.data||[]).map(x=>({id:x.id,g:x.grupo,s:x.materia,t:x.teacher_id,d:x.dia,p:x.hora}));
   S.status={};(st.data||[]).forEach(x=>S.status[x.dia+'|'+x.hora+'|'+x.teacher_id]=x.estado);
   if(!S.teachers.some(x=>x.id===S.me))S.me=S.teachers[0]?S.teachers[0].id:'';
@@ -462,20 +464,24 @@ async function afterAuth(cct){if(ui.rec||location.hash.includes('type=recovery')
   if(!session){S.sess=null;S.prof=null;render();return}
   let {data:p,error:pe}=await getP(session.user.id);
   if(!p){
-    let pend=null;try{pend=JSON.parse(localStorage.getItem('planify.pend'))}catch(e){}
+    let pend=null,pe2=null;try{pend=JSON.parse(localStorage.getItem('planify.pend'))}catch(e){}
+    const um=session.user.user_metadata||{};if(!pend&&um.cct)pend={email:(session.user.email||'').toLowerCase(),cct:um.cct,name:um.nombre,turno:um.turno};
     if(pend&&pend.email===(session.user.email||'').toLowerCase()){
-      const r=await sb.rpc('register_teacher',{p_cct:pend.cct,p_nombre:pend.name,p_materias:pend.subs,p_turno:pend.turno});
-      if(r.error)pe=r.error;else{localStorage.removeItem('planify.pend');({data:p,error:pe}=await getP(session.user.id))}
+      const r=await sb.rpc('request_access',{p_cct:pend.cct,p_nombre:pend.name,p_turno:pend.turno});
+      if(r.error||r.data!=='ok')pe2=r.error?r.error.message:r.data;else localStorage.removeItem('planify.pend');
     }
+    const rq=await sb.from('access_requests').select('id').eq('user_id',session.user.id).maybeSingle();
+    S.sess=null;S.prof=null;
+    ui.msg=rq.data?{ok:1,t:'⏳ Tu solicitud ya está enviada. Falta que Dirección la apruebe; vuelve a intentar más tarde.'}:{ok:0,t:pe2||(pe&&pe.message)||'Esta cuenta no tiene acceso a ninguna escuela. Toca "Crear cuenta" para enviar tu solicitud.'};
+    await sb.auth.signOut();render();return
   }
-  if(!p){S.sess=null;S.prof=null;ui.msg={ok:0,t:'No se encontró perfil para '+session.user.email+'. '+(pe?pe.message:'Tu correo debe estar autorizado por Dirección de tu escuela y la cuenta debe crearse con "Crear cuenta de maestro".')};await sb.auth.signOut();render();return}
   const {data:sc}=await sb.from('schools').select('*').eq('id',p.school_id).maybeSingle();
   if(cct&&(!sc||sc.cct!==cct)){S.sess=null;S.prof=null;ui.msg={ok:0,t:'La clave del plantel (CCT) no corresponde a tu cuenta.'};await sb.auth.signOut();render();return}
   if(sc){S.school=sc.nombre;if(sc.logo)S.logo=sc.logo;S.ciclo=sc.ciclo||'impar';S.cct=sc.cct;S.hasHor=!!sc.horario;if(sc.horario){CFG.M={...CFG.M,...(sc.horario.M||{})};CFG.V={...CFG.V,...(sc.horario.V||{})};CFG.periodo=sc.horario.periodo||''}buildTimes()}
   S.sess=session.user.id;S.prof={id:p.id,name:p.nombre,rol:p.rol,school_id:p.school_id};if(p.rol!=='admin')S.me=p.id;
   ui.msg=null;ui.tab='me';seen=new Set();subscribe();await load();
 }
-const DBACTS=['login','reg','logout','set','acc','gen','delT','delG','addG','addA','delA','ciclo','addE','delE','addM','delM','saveM','forgot','setpw','sub','cell','noC','clrC','saveC','saveH','pdf1','pdfall','gedit','gclose','gcust','gsadd','gsdel','grst','cadd','cdel','savePg','saveTu','advance'];
+const DBACTS=['login','reg','logout','set','acc','gen','delT','delG','addG','addA','delA','ciclo','addE','delE','addM','delM','saveM','forgot','setpw','sub','cell','noC','clrC','saveC','saveH','pdf1','pdfall','gedit','gclose','gcust','gsadd','gsdel','grst','cadd','cdel','savePg','saveTu','advance','newcode','apT','apA','rej'];
 document.addEventListener('click',async ev=>{
   const b=ev.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;if(!DBACTS.includes(a))return;
   ev.stopPropagation();if(a!=='delT'&&a!=='delG'&&a!=='advance')ui.confirm=null;
@@ -490,17 +496,17 @@ document.addEventListener('click',async ev=>{
       const subs=[...document.querySelectorAll('.ns:checked')].map(x=>S.subjects[+x.value].n);
       if(!name||!email||!cct||pw.length<8||!/[A-Za-z]/.test(pw)||!/\d/.test(pw))ui.msg={ok:0,t:'Llena todos los campos. La contraseña debe tener 8 o más caracteres, con letras y números.'};
       else{
-        const ck=await sb.rpc('check_registration',{p_cct:cct,p_email:email});
-        if(!ck.data)ui.msg={ok:0,t:'Ese correo no está autorizado por la escuela, o la clave (CCT) es incorrecta. Pide a Dirección que autorice tu correo.'};
+        const {data,error}=await sb.auth.signUp({email,password:pw,options:{data:{nombre:name,cct,turno}}});
+        if(error)ui.msg={ok:0,t:error.message};
         else{
-          const {data,error}=await sb.auth.signUp({email,password:pw});
-          if(error)ui.msg={ok:0,t:error.message};
-          else{
-            localStorage.setItem('planify.pend',JSON.stringify({email:email.toLowerCase(),cct,name,subs,turno}));
-            ui.reg=false;
-            if(data.session){await afterAuth(cct);return}
-            ui.msg={ok:1,t:'Cuenta creada. Revisa tu correo, confirma tu cuenta y luego inicia sesión con tu clave de plantel.'};
-          }
+          localStorage.setItem('planify.pend',JSON.stringify({email:email.toLowerCase(),cct,name,turno}));
+          ui.reg=false;
+          if(data.session){
+            const r=await sb.rpc('request_access',{p_cct:cct,p_nombre:name,p_turno:turno});
+            await sb.auth.signOut();S.sess=null;S.prof=null;
+            if(r.data==='ok'){localStorage.removeItem('planify.pend');ui.msg={ok:1,t:'✅ Solicitud enviada. Cuando Dirección la apruebe, entra con tu correo y tu contraseña.'}}
+            else{ui.msg={ok:0,t:r.error?r.error.message:r.data};ui.reg=true}
+          }else ui.msg={ok:1,t:'Cuenta creada. Confirma tu correo y luego inicia sesión para enviar tu solicitud.'};
         }
       }
       render();
@@ -532,7 +538,7 @@ document.addEventListener('click',async ev=>{
       if(v&&!S.groups.includes(v)){await sb.from('groups').insert({nombre:v,turno:$('#gt').value,semestre:+$('#gs').value,specialty_id:$('#gp').value||null,tutor_id:$('#gtt').value||null,school_id:S.prof.school_id});await load()}
     }else if(a==='addA'){
       const e=$('#ae').value.trim().toLowerCase();if($('#ar').value==='admin'&&!confirm('Un administrador puede cambiar todo en tu escuela. ¿Seguro que quieres autorizarlo?'))return;
-      if(e){const r=await sb.from('allowed_teachers').insert({school_id:S.prof.school_id,email:e,turno:$('#at').value,rol:$('#ar').value});if(r.error)ui.msg={ok:0,t:r.error.message};await load()}
+      if(e){const r=await sb.rpc('invite',{p_email:e,p_turno:$('#at').value,p_rol:$('#ar').value});if(r.error)toast(r.error.message);else ui.invite={e,c:r.data};await load()}
     }else if(a==='delA'){await sb.from('allowed_teachers').delete().eq('id',b.dataset.id);await load()
     }else if(a==='ciclo'){S.ciclo=b.dataset.v;await sb.from('schools').update({ciclo:S.ciclo}).eq('id',S.prof.school_id);render()
     }else if(a==='addE'){const v=$('#en').value.trim();if(v){const r=await sb.from('specialties').insert({school_id:S.prof.school_id,nombre:v});if(r.error)ui.msg={ok:0,t:r.error.message};await load()}
@@ -583,6 +589,12 @@ document.addEventListener('click',async ev=>{
     }else if(a==='cdel'){await sb.from('semester_subjects').delete().eq('id',b.dataset.id);await load()
     }else if(a==='savePg'){const r=await sb.rpc('set_my_prefs',{p_prefs:[...document.querySelectorAll('.pg:checked')].map(x=>x.value)});toast(r.error?r.error.message:'Listo, tus grupos se tomarán en cuenta al generar el horario.');await load()
     }else if(a==='saveTu'){const r=await sb.rpc('set_my_tutor',{p_group:$('#tu').value||null});toast(r.error?r.error.message:'Tutoría guardada.');await load()
+    }else if(a==='apT'||a==='apA'){
+      const adm=a==='apA';if(adm&&!confirm('Un administrador puede cambiar todo en tu escuela. ¿Seguro?'))return;
+      const r=await sb.rpc('approve_request',{p_id:b.dataset.id,p_rol:adm?'admin':'teacher',p_turno:b.dataset.t});
+      toast(r.error?r.error.message:(r.data==='ok'?'Listo: ya tiene acceso. 🎉':r.data));await load()
+    }else if(a==='rej'){await sb.from('access_requests').delete().eq('id',b.dataset.id);await load()
+    }else if(a==='newcode'){const r=await sb.rpc('invite',{p_email:b.dataset.e,p_turno:b.dataset.t,p_rol:b.dataset.r});if(r.error)toast(r.error.message);else ui.invite={e:b.dataset.e,c:r.data};await load()
     }else if(a==='advance'){
       if(ui.confirm!=='adv'){ui.confirm='adv';render();return}
       ui.confirm=null;const sid=S.prof.school_id;
