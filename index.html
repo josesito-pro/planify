@@ -496,7 +496,7 @@ document.addEventListener('click',async ev=>{
       const subs=[...document.querySelectorAll('.ns:checked')].map(x=>S.subjects[+x.value].n);
       if(!name||!email||!cct||pw.length<8||!/[A-Za-z]/.test(pw)||!/\d/.test(pw))ui.msg={ok:0,t:'Llena todos los campos. La contraseña debe tener 8 o más caracteres, con letras y números.'};
       else{
-        const {data,error}=await sb.auth.signUp({email,password:pw,options:{data:{nombre:name,cct,turno}}});
+        const {data,error}=await sb.auth.signUp({email,password:pw,options:{emailRedirectTo:location.origin+location.pathname,data:{nombre:name,cct,turno}}});
         if(error)ui.msg={ok:0,t:error.message};
         else{
           localStorage.setItem('planify.pend',JSON.stringify({email:email.toLowerCase(),cct,name,turno}));
