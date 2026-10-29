@@ -10,13 +10,15 @@ const shiftOf=p=>p<PER?'M':'V',valid=p=>p%PER<CFG[shiftOf(p)].n;buildTimes();
 const RC=p=>REC[shiftOf(p)],isRecAfter=p=>{const c=CFG[shiftOf(p)];return c.rec>0&&c.recDur>0&&c.rec<c.n&&p%PER===c.rec-1},turnoP=p=>p<PER?'Matutino':'Vespertino',covers=(t,p)=>!t.turno||t.turno==='Ambos'||t.turno===turnoP(p);
 function seeded(s){return()=>(s=(s*1664525+1013904223)%4294967296)/4294967296}
 function generate(st){for(let s=1;s<500;s++){const r=gen1(st,s);if(r)return r}return null}
+const capOf=t=>{const b=t.maxf||t.base;return b?b+(t.exa||0):null};
+const nombLabel=t=>({medio:'Medio tiempo · 20 h',tres:'Tres cuartos de tiempo · 30 h',tc:'Tiempo completo · 40 h',asig:'Por horas de asignatura'})[t.nomb]||'Nombramiento sin definir';
 const baseFor=(st,g)=>{const cat=(st.catalog||[]).filter(x=>x.sem===(st.gsem||{})[g]);return [...(cat.length?cat.map(x=>({n:x.n,h:x.h})):st.subjects),...(st.sm||[]).filter(x=>x.spec&&x.spec===(st.gspec||{})[g]&&x.sem===(st.gsem||{})[g]).map(x=>({n:x.n,h:x.h}))]};
-const subsFor=(st,g)=>{const own=(st.gsub||{})[g],L=own&&own.length?own.map(x=>({n:x.n,h:x.h})):baseFor(st,g);if((st.gtutor||{})[g]&&!L.some(x=>x.n==='Tutoría'))L.push({n:'Tutoría',h:1});return L};function gen1(st,seed){const GT=st.gt||{};
+const subsFor=(st,g)=>{const own=(st.gsub||{})[g],L=own&&own.length?own.map(x=>({n:x.n,h:x.h})):baseFor(st,g);if((st.gtutor||{})[g]&&!L.some(x=>x.n==='Tutoría'))L.push({n:'Tutoría',h:1});return L};function gen1(st,seed){const GT=st.gt||{};st._w=[];
   const rnd=seeded(seed*7919),load={};st.teachers.forEach(t=>load[t.id]=0);const jobs=[];
   for(const g of st.groups)for(const s of subsFor(st,g)){
     if(!(s.h>0))continue;if(s.n==='Tutoría'){const tt=(st.gtutor||{})[g];if(!tt||!(tt in load))continue;load[tt]+=s.h;jobs.push({g,s:s.n,t:tt,h:s.h});continue}
     const el=st.teachers.filter(t=>t.subjects.includes(s.n)&&(!GT[g]||!t.turno||t.turno==='Ambos'||t.turno===GT[g]));if(!el.length)return null;
-    el.sort((a,b)=>load[a.id]-load[b.id]||rnd()-.5);const mn=load[el[0].id],pf=el.find(t=>(t.prefs||[]).includes(g)&&load[t.id]<=mn+4),ch=pf||el[0];load[ch.id]+=s.h;jobs.push({g,s:s.n,t:ch.id,h:s.h});
+    const cp=t=>capOf(t)||40,ok=el.filter(t=>!capOf(t)||load[t.id]+s.h<=capOf(t));if(!ok.length)st._w.push(g+' · '+s.n);const pool=ok.length?ok:el;pool.sort((a,b)=>load[a.id]/cp(a)-load[b.id]/cp(b)||rnd()-.5);const mn=load[pool[0].id]/cp(pool[0]),pf=pool.find(t=>(t.prefs||[]).includes(g)&&load[t.id]/cp(t)<=mn+.12),ch=pf||pool[0];load[ch.id]+=s.h;jobs.push({g,s:s.n,t:ch.id,h:s.h});
   }
   jobs.sort((a,b)=>load[b.t]-load[a.t]||rnd()-.5);
   const gb=new Set,tb=new Set,sd={},td={},out=[];
@@ -80,7 +82,7 @@ function acceptOffer(key){
 function regen(){
   const r=generate(S);
   if(r){S.schedule=r;S.makeup=[];S.status={};S.declined={};const h=S.teachers.map(t=>hoursOf(t.id));
-    ui.msg={ok:1,t:'Horario generado sin choques. Carga por maestro: de '+Math.min(...h)+' a '+Math.max(...h)+' horas a la semana.'}}
+    ui.msg={ok:1,t:'Horario generado sin choques. Carga por maestro: de '+Math.min(...h)+' a '+Math.max(...h)+' horas a la semana.'+(S._w&&S._w.length?' ⚠ '+S._w.length+' asignación(es) superan el límite de horas de algún maestro; revisa Maestros → Horas.':'')}}
   else ui.msg={ok:0,t:'No se pudo repartir sin choques. Revisa que cada materia tenga al menos un maestro y que las horas no pasen de '+(DAYS.length*CFG.M.n)+' por grupo, y que el turno de cada grupo tenga horas en Jornada y receso.'};
   save();
 }
@@ -149,7 +151,7 @@ function vMe(){
       +(isRecAfter(i)?`<div class="li day-row rec"><span class="t mono">${RC(i).slice(0,5)}</span><div style="flex:1"><b>Receso</b> · ${RC(i)}</div>${chip('warn','Descanso')}</div>`:'');}).join('')}</div>
     <small>${hoursOf(t.id)} horas a la semana asignadas.</small></div>`;
   const pick=isAdmin()?`<div class="card"><div class="field"><label for="me">Ver como maestro / maestra</label><select id="me" class="f">${S.teachers.map(x=>`<option value="${x.id}"${x.id===t.id?' selected':''}>${esc(x.name)} · ${esc(x.subjects.join(', '))}</option>`).join('')}</select></div></div>`:'';
-  return `<div class="hello"><h1>Buen día, ${esc(((U()||{}).name||'').split(' ')[0])}</h1><small>Este es tu panorama de hoy, ${DAYS_FULL[d]}.</small></div>`+emptyMe()+pick+now+next+agenda+misMat()+misPref()+mfaCard();
+  return `<div class="hello"><h1>Buen día, ${esc(((U()||{}).name||'').split(' ')[0])}</h1><small>Este es tu panorama de hoy, ${DAYS_FULL[d]}.</small></div>`+emptyMe()+pick+now+next+agenda+misMat()+misPref()+misHoras()+mfaCard();
 }
 function vSchool(){
   const {d,p}=S.clock,rows=S.groups.map(g=>({g,st:groupState(g)})).filter(r=>r.st.k!=='off'),bad=rows.filter(r=>r.st.k!=='ok').length,free=S.teachers.filter(t=>!tat(t.id,d,p)&&covers(t,p));
@@ -189,9 +191,9 @@ function vSetup(){
   <div class="row"><label>Receso después de la hora n.º <input type="number" id="hr-${sh}" value="${c.rec}" min="0" max="9"></label><label>Duración (min) <input type="number" id="hc-${sh}" value="${c.recDur}" min="0" max="60"></label></div></div>`}).join('')}
   <div class="field"><label for="hp">Periodo en el encabezado del PDF (opcional)</label><input type="text" id="hp" value="${esc(CFG.periodo||'')}" placeholder="Septiembre 2026 - Enero 2027"></div>
   <button class="btn primary" data-act="saveH">Guardar jornada y receso</button><small>Después de guardar, toca "Generar horario equitativo".</small></div>
-  <!--@p--><div class="card"><h3>Maestros (${S.teachers.length}) · cuentas: ${S.users.length}</h3><div class="list">${S.teachers.map(t=>`
-    <div class="li"><div style="flex:1"><b>${esc(t.name)}</b> <small>${esc(t.subjects.join(', '))}</small><div class="bar"><i style="width:${hoursOf(t.id)/mx*100}%"></i></div></div>
-    <span class="mono">${hoursOf(t.id)} h</span><button class="btn small ghost${ui.confirm===t.id?' confirm':''}" data-act="delT" data-t="${t.id}" aria-label="Quitar a ${esc(t.name)}">${ui.confirm===t.id?'¿Seguro?':'Quitar'}</button></div>`).join('')}</div>
+  <!--@p-->${hoursEditor()}<!--@p-->${normasCard()}<!--@p--><div class="card"><h3>Maestros (${S.teachers.length}) · cuentas: ${S.users.length}</h3><div class="list">${S.teachers.map(t=>`
+    <div class="li"><div style="flex:1"><b>${esc(t.name)}</b> <small>${esc(t.subjects.join(', '))}</small><br><small>${esc(nombLabel(t))}</small>${t.exs>t.exa?' '+chip('warn','Pide +'+t.exs+' h')+' <button class="btn small" data-act="hok" data-id="'+t.id+'" data-n="'+t.exs+'">Autorizar</button>':''}<div class="bar"><i style="width:${hoursOf(t.id)/mx*100}%"></i></div></div>
+    <span class="mono">${hoursOf(t.id)}${capOf(t)?' / '+capOf(t):''} h</span><button class="btn small ghost" data-act="hedit" data-id="${t.id}">Horas</button><button class="btn small ghost${ui.confirm===t.id?' confirm':''}" data-act="delT" data-t="${t.id}" aria-label="Quitar a ${esc(t.name)}">${ui.confirm===t.id?'¿Seguro?':'Quitar'}</button></div>`).join('')}</div>
     <small>Cada maestro crea su propia cuenta desde la pantalla de inicio (sin límite de usuarios).</small></div>
   <!--@e-->${mfaCard()}<!--@e--><div class="card"><h3>Ciclo escolar</h3><div class="seg"><button class="btn${S.ciclo==='par'?'':' on'}" data-act="ciclo" data-v="impar">Agosto: semestres 1, 3, 5</button><button class="btn${S.ciclo==='par'?' on':''}" data-act="ciclo" data-v="par">Febrero: semestres 2, 4, 6</button></div></div>
   <!--@a--><div class="card"><h3>Asignaturas por semestre</h3><small>Escribe la asignatura y elige en qué semestre se imparte (ej. Inglés III en 3°). Los grupos de ese semestre la toman solos; después puedes quitar o agregar por grupo con ✏️.</small>
@@ -343,6 +345,7 @@ function entries(){return (isAdmin()?[
  ['🗓️','Avanzar al siguiente ciclo escolar','ciclo semestre avanzar siguiente agosto febrero','setup','g'],
  ['✅','Aprobar solicitudes de acceso','solicitud aprobar acceso maestros nuevos autorizar','setup','p'],
  ['🛡️','Agregar o quitar administradores','administrador admin quitar agregar','setup','p'],
+ ['⏱️','Editar nombramiento y horas de un maestro','horas nombramiento 20 30 40 tiempo completo medio extra maestro','setup','p'],
  ['🖨️','Imprimir horarios en PDF','pdf imprimir horario salon descargar','table'],
  ['🔍','Ver el horario de un grupo o maestro','horario grupo maestro consultar ver','table'],
  ['🟢','Ver qué grupos tienen maestro ahora','ahora en vivo sin maestro cobertura','school'],
@@ -353,6 +356,7 @@ function entries(){return (isAdmin()?[
  ['🎯','Elegir grupos que prefiero (opcional)','grupo preferido elegir','me','','','mis-grupos'],
  ['🧑‍🏫','Marcar que soy tutor de un grupo','tutor tutoria','me','','','mis-grupos'],
  ['🙋','Avisar que no asistiré o tengo junta','falta ausente junta asistire avisar','me'],
+ ['⏱️','Pedir más horas de lo habitual (opcional)','horas extra mas solicitar nombramiento','me','','','mis-horas'],
  ['🗓️','Consultar el horario de un grupo','horario grupo consultar','table'],
  ['🟢','Ver quién está disponible ahora','disponible ahora en vivo sala maestros','school'],
  ['🔒','Seguridad de mi cuenta (dos pasos)','seguridad dos pasos 2fa','me','','','mfa-card']
@@ -408,6 +412,35 @@ function groupEditor(){
   ${own.length?'<button class="btn small ghost" data-act="grst">Volver a la lista base</button>':''}</div>`;
 }
 async function ensureOwn(g){if((S.gsub[g]||[]).length)return;const rows=baseFor(S,g).map(x=>({school_id:S.prof.school_id,grupo:g,nombre:x.n,horas:x.h})).filter((r,i,a)=>a.findIndex(y=>y.nombre===r.nombre)===i);if(rows.length)await sb.from('group_subjects').insert(rows)}
+function hoursEditor(){
+  const t=S.teachers.find(x=>x.id===ui.hedit);if(!t)return '';
+  return `<div class="card hero"><div class="row"><h3>Horas de ${esc(t.name)}</h3><button class="btn small ghost" data-act="hclose">Cerrar</button></div>
+  <small>Fija el nombramiento y el máximo de horas. Planify no pasará de ese límite al generar el horario (suma las horas extra que autorices).</small>
+  <div class="field"><label for="hn">Nombramiento</label><select id="hn" class="f"><option value="">Sin definir (sin límite)</option>${[['medio','Medio tiempo · 20 h'],['tres','Tres cuartos de tiempo · 30 h'],['tc','Tiempo completo · 40 h'],['asig','Por horas de asignatura']].map(([v,l])=>`<option value="${v}"${t.nomb===v?' selected':''}>${l}</option>`).join('')}</select></div>
+  <div class="row"><div class="field" style="flex:1"><label for="hb">Horas semanales de nombramiento</label><input type="number" id="hb" min="1" max="60" value="${t.base||''}"></div><div class="field" style="flex:1"><label for="hm">Máximo frente a grupo (opcional)</label><input type="number" id="hm" min="1" max="60" value="${t.maxf||''}"></div></div>
+  <div class="field"><label for="he">Horas extra autorizadas</label><input type="number" id="he" min="0" max="20" value="${t.exa||0}"><small>${t.exs?'El maestro solicitó +'+t.exs+' h.':'El maestro no ha solicitado horas extra.'}</small></div>
+  <button class="btn primary" data-act="hsave">Guardar horas</button></div>`;
+}
+document.addEventListener('change',ev=>{if(ev.target.id==='hn'){const m={medio:20,tres:30,tc:40}[ev.target.value],hb=document.getElementById('hb');if(m&&hb)hb.value=m}});
+function misHoras(){
+  const t=S.teachers.find(x=>x.id===(S.prof&&S.prof.id));if(isAdmin()||!t)return '';
+  const hh=hoursOf(t.id),cap=capOf(t);
+  return `<div class="card" id="mis-horas"><h3>Mis horas</h3>
+  <small>${esc(nombLabel(t))}${t.base?' · '+t.base+' h por semana':''}. Este horario te asigna <b>${hh}</b> h${cap?' de un máximo de <b>'+cap+'</b>':''}.</small>
+  <div class="field"><label for="xh">¿Quieres más horas de lo habitual? <small>(opcional)</small></label><select id="xh" class="f">${[0,2,4,6,8,10].map(n=>`<option value="${n}"${(t.exs||0)===n?' selected':''}>${n?'+ '+n+' horas':'No, con mis horas habituales'}</option>`).join('')}</select></div>
+  <button class="btn" data-act="askx">Enviar mi solicitud</button>
+  <small>${t.exs?(t.exa>=t.exs?'Dirección ya autorizó +'+t.exa+' h.':'Solicitaste +'+t.exs+' h. Dirección decide según las necesidades del plantel y el presupuesto disponible.'):'Dirección decide si hay horas disponibles según las necesidades del plantel y el presupuesto.'}</small></div>`;
+}
+function normasCard(){return `<details class="card"><summary>Normas DGETI sobre horas del personal docente (consulta)</summary>
+<small>Resumen informativo de las <i>Normas que regulan las condiciones específicas de trabajo del personal docente de la DGETI</i> (1984), solo en lo que se relaciona con horas. No es asesoría legal: confirma siempre el texto vigente con Recursos Humanos o tu representación sindical.</small>
+<ul>
+<li><b>Profesores de carrera</b> (art. 14): nombramientos de <b>20, 30 o 40 horas semana-mes</b>. Medio tiempo 20 h, tres cuartos de tiempo 30 h y tiempo completo 40 h.</li>
+<li><b>Jornada</b> (art. 85): se fija de acuerdo con las necesidades del plantel.</li>
+<li><b>Más horas</b> (art. 76 de las Normas y art. 69 del Reglamento de Promoción): el incremento de horas de carrera, de medio tiempo a tres cuartos o de tres cuartos a tiempo completo dentro de la misma categoría, se hace a juicio de la Dirección del plantel, con partida presupuestal y necesidad académica. Por eso en Planify el maestro <b>solicita</b> horas extra y Dirección las <b>autoriza</b>.</li>
+<li><b>Límites de docencia frente a grupo:</b> en los textos consultados aparecen límites distintos según categoría y nivel (por ejemplo, para tiempo completo 30, 32 o 34 h; para medio tiempo 15, 16 o 18 h). Por eso Planify no impone un número: Dirección fija el <b>máximo frente a grupo</b> de cada maestro.</li>
+<li><b>Horas de asignatura</b> (art. 86): revisa el texto oficial. En Planify captura sus horas semanales con el nombramiento "Por horas de asignatura".</li>
+</ul>
+<small>Fuentes: <a href="http://cbtis174.edu.mx/img/doc/Normas_que_Regulan_las_Condiciones_Especficas_del_Personal_Docente_de_la_DGETI.pdf" target="_blank" rel="noopener noreferrer">texto de las Normas (PDF)</a> · <a href="http://uemstis.sep.gob.mx/index.php/normateca/104-categoria-leyesreglamentos/148-recursos-humanos" target="_blank" rel="noopener noreferrer">Normateca de la UEMSTIS</a>.</small></details>`}
 const shiftIdx=sh=>[...Array(PER).keys()].map(k=>(sh==='V'?PER:0)+k).filter(valid);
 function visFor(t){const o=[];if(covers(t,0))o.push(...shiftIdx('M'));if(covers(t,PER))o.push(...shiftIdx('V'));return o}
 function visTable(){if(ui.kind==='g')return shiftIdx(S.gt[ui.sel]==='Vespertino'?'V':'M');return visFor(S.teachers.find(x=>x.id===ui.sel)||{})}
@@ -467,7 +500,7 @@ vLogin=function(){return ui.mfaLogin?MFAFORM():ui.rec?`<div class="card hero log
 async function load(){
   const adm=S.prof&&S.prof.rol==='admin';
   const [t,g,s,st,al,sp,sm,cat,gs]=await Promise.all([sb.from('teachers').select('*'),sb.from('groups').select('*'),sb.from('schedule').select('*'),sb.from('status').select('*'),adm?sb.from('access_requests').select('*').order('created_at'):null,sb.from('specialties').select('*'),sb.from('submodules').select('*'),sb.from('semester_subjects').select('*'),sb.from('group_subjects').select('*')]);
-  S.teachers=(t.data||[]).filter(x=>x.rol!=='admin').map(x=>({id:x.id,name:x.nombre,subjects:x.materias||[],turno:x.turno,prefs:x.prefs||[]}));
+  S.teachers=(t.data||[]).filter(x=>x.rol!=='admin').map(x=>({id:x.id,name:x.nombre,subjects:x.materias||[],turno:x.turno,prefs:x.prefs||[],nomb:x.nombramiento,base:x.horas_base,maxf:x.max_frente,exs:x.extra_solicitadas||0,exa:x.extra_autorizadas||0}));
   S.users=S.teachers;S.admins=(t.data||[]).filter(x=>x.rol==='admin').map(x=>({id:x.id,name:x.nombre,uid:x.user_id}));S.gt={};S.gsem={};S.gspec={};S.gtutor={};(g.data||[]).forEach(x=>{S.gt[x.nombre]=x.turno;S.gsem[x.nombre]=x.semestre;S.gspec[x.nombre]=x.specialty_id;S.gtutor[x.nombre]=x.tutor_id});S.specs=(sp&&sp.data||[]).map(x=>({id:x.id,n:x.nombre}));S.sm=(sm&&sm.data||[]).map(x=>({id:x.id,spec:x.specialty_id,sem:x.semestre,n:x.nombre,h:x.horas}));S.catalog=(cat&&cat.data||[]).map(x=>({id:x.id,sem:x.semestre,n:x.nombre,h:x.horas}));S.gsub={};(gs&&gs.data||[]).forEach(x=>(S.gsub[x.grupo]=S.gsub[x.grupo]||[]).push({id:x.id,n:x.nombre,h:x.horas}));S.groups=Object.keys(S.gt).sort();S.requests=al&&al.data||[];S.allowed=[];
   S.schedule=(s.data||[]).map(x=>({id:x.id,g:x.grupo,s:x.materia,t:x.teacher_id,d:x.dia,p:x.hora}));
   S.status={};(st.data||[]).forEach(x=>S.status[x.dia+'|'+x.hora+'|'+x.teacher_id]=x.estado);
@@ -505,7 +538,7 @@ async function afterAuth(cct){if(ui.rec||location.hash.includes('type=recovery')
   try{const {data:fl}=await sb.auth.mfa.listFactors();S.mfa=((fl&&fl.totp)||[]).filter(f=>f.status==='verified')}catch(e){S.mfa=[]}
   ui.msg=null;ui.tab='me';seen=new Set();subscribe();await load();
 }
-const DBACTS=['login','reg','logout','set','acc','gen','delT','delG','addG','addA','delA','ciclo','addE','delE','addM','delM','saveM','forgot','setpw','sub','cell','noC','clrC','saveC','saveH','pdf1','pdfall','gedit','gclose','gcust','gsadd','gsdel','grst','cadd','cdel','savePg','saveTu','advance','newcode','apT','apA','rej','goto','mfaon','mfaverify','mfaoff','mfalogin','tday'];
+const DBACTS=['login','reg','logout','set','acc','gen','delT','delG','addG','addA','delA','ciclo','addE','delE','addM','delM','saveM','forgot','setpw','sub','cell','noC','clrC','saveC','saveH','pdf1','pdfall','gedit','gclose','gcust','gsadd','gsdel','grst','cadd','cdel','savePg','saveTu','advance','newcode','apT','apA','rej','goto','mfaon','mfaverify','mfaoff','mfalogin','tday','hedit','hclose','hsave','hok','askx'];
 document.addEventListener('click',async ev=>{
   const b=ev.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;if(!DBACTS.includes(a))return;
   ev.stopPropagation();if(a!=='delT'&&a!=='delG'&&a!=='advance')ui.confirm=null;
@@ -621,6 +654,19 @@ document.addEventListener('click',async ev=>{
     }else if(a==='cdel'){await sb.from('semester_subjects').delete().eq('id',b.dataset.id);await load()
     }else if(a==='savePg'){const r=await sb.rpc('set_my_prefs',{p_prefs:[...document.querySelectorAll('.pg:checked')].map(x=>x.value)});toast(r.error?r.error.message:'Listo, tus grupos se tomarán en cuenta al generar el horario.');await load()
     }else if(a==='saveTu'){const r=await sb.rpc('set_my_tutor',{p_group:$('#tu').value||null});toast(r.error?r.error.message:'Tutoría guardada.');await load()
+    }else if(a==='hedit'){ui.hedit=b.dataset.id;ui.tab='setup';ui.sub='p';render();window.scrollTo(0,0)
+    }else if(a==='hclose'){ui.hedit=null;render()
+    }else if(a==='hsave'){
+      const base=+$('#hb').value||null,maxf=+$('#hm').value||null,ex=+$('#he').value||0,errs=[];
+      if(base&&(base<1||base>60))errs.push(['hb','Escribe entre 1 y 60 horas.']);
+      if(maxf&&(maxf<1||maxf>60))errs.push(['hm','Escribe entre 1 y 60 horas.']);
+      if(base&&maxf&&maxf>base)errs.push(['hm','El máximo frente a grupo no puede ser mayor que las horas de nombramiento.']);
+      if(ex<0||ex>20)errs.push(['he','Las horas extra van de 0 a 20.']);
+      if(errs.length){fieldErrors(errs);return}
+      const r=await sb.from('teachers').update({nombramiento:$('#hn').value||null,horas_base:base,max_frente:maxf,extra_autorizadas:ex}).eq('id',ui.hedit);
+      toast(r.error?r.error.message:'Horas guardadas. Genera el horario de nuevo para aplicarlas.');if(!r.error)ui.hedit=null;await load()
+    }else if(a==='hok'){const r=await sb.from('teachers').update({extra_autorizadas:+b.dataset.n}).eq('id',b.dataset.id);toast(r.error?r.error.message:'Horas extra autorizadas. Genera el horario de nuevo para aplicarlas.');await load()
+    }else if(a==='askx'){const r=await sb.rpc('request_extra_hours',{p_n:+$('#xh').value||0});toast(r.error?r.error.message:'Solicitud enviada a Dirección.');await load()
     }else if(a==='tday'){ui.day=+b.dataset.v;render()
     }else if(a==='goto'){go(b.dataset)
     }else if(a==='mfaon'){
